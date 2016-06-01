@@ -1,6 +1,7 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.list
 
 import com.ivieleague.kotlin.collection.map
+import com.ivieleague.kotlin.observable.property.mapReadOnly
 
 /**
  * Created by jivie on 5/6/16.
@@ -40,7 +41,7 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.map(listenerMapper)
     override val onChange: MutableSet<(E, Int) -> Unit> get() = source.onChange.map(listenerMapper)
 
-    override val onUpdate = source.onUpdate.mapObservable<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped }, { throw IllegalAccessException() })
+    override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
     override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.map({ input -> { input(this) } })
 }
 

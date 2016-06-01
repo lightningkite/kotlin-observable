@@ -1,19 +1,21 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.list
 
+import com.ivieleague.kotlin.Disposable
 import com.ivieleague.kotlin.collection.addSorted
 import com.ivieleague.kotlin.collection.map
+import com.ivieleague.kotlin.observable.property.ObservablePropertyReference
 import com.ivieleague.kotlin.runAll
 import java.util.*
 
 /**
  * Created by jivie on 5/23/16.
  */
-class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> Boolean) : ObservableList<E>, com.ivieleague.kotlin.Disposable {
+class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> Boolean) : ObservableList<E>, Disposable {
 
     val indexList = ArrayList<Int>()
 
     val indexCompare = { a: Int, b: Int -> sorter(source!![a], source!![b]) }
-    var listenerSet: KObservableListListenerSet<E>? = null
+    var listenerSet: ObservableListListenerSet<E>? = null
     var source: ObservableList<E> = sourceInit
         set(value) {
             source.removeListenerSet(listenerSet!!)
@@ -30,7 +32,7 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
         source.forEachIndexed { index, item ->
             indexList.addSorted(index, indexCompare)
         }
-        listenerSet = KObservableListListenerSet(
+        listenerSet = ObservableListListenerSet(
                 onAddListener = { item, index ->
                     for (i in indexList.indices) {
                         if (indexList[i] >= index)

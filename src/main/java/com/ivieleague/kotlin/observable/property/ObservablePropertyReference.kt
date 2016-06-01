@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KMutableProperty1

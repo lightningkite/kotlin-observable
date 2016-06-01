@@ -1,11 +1,11 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 import com.ivieleague.kotlin.Disposable
 
 /**
  * Created by jivie on 4/5/16.
  */
-class ObservableObservableProperty<T>(initialObservable: MutableObservableProperty<T>) : ObservablePropertyBase<T>(), Disposable {
+class ObservableObservableProperty<T>(initialObservable: ObservableProperty<T>) : ObservablePropertyBase<T>(), Disposable {
     val myListener: (T) -> Unit = {
         super.update(it)
     }
@@ -15,7 +15,7 @@ class ObservableObservableProperty<T>(initialObservable: MutableObservableProper
         initialObservable.add(myListener)
     }
 
-    var observable: MutableObservableProperty<T> = initialObservable
+    var observable: ObservableProperty<T> = initialObservable
         set(value) {
             field.remove(myListener)
             field = value
@@ -30,6 +30,11 @@ class ObservableObservableProperty<T>(initialObservable: MutableObservableProper
     override var value: T
         get() = observable.value
         set(value) {
-            observable.value = value
+            val obs = observable
+            if (obs is MutableObservableProperty) {
+                obs.value = value
+            } else {
+                throw IllegalAccessException()
+            }
         }
 }

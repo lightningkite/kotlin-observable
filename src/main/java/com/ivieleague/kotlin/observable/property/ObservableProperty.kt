@@ -1,5 +1,6 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
+import com.ivieleague.kotlin.runAll
 import kotlin.reflect.KProperty
 
 /**
@@ -15,4 +16,6 @@ interface ObservableProperty<T> : MutableCollection<(T) -> Unit> {
     operator fun getValue(thisRef: Any?, prop: KProperty<*>): T {
         return value
     }
+
+    fun update() = this.runAll(value)
 }

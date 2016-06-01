@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 import kotlin.reflect.KProperty
 

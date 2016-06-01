@@ -1,11 +1,11 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 import java.util.*
 
 /**
  * Created by jivie on 2/22/16.
  */
-class KObservableMapped<S, T>(val actualObservable: ObservableProperty<S>, val mapper: (S) -> T, val reverseMapper: (T) -> S) : ObservableProperty<T> {
+class ObservablePropertyMapped<S, T>(val actualObservable: ObservableProperty<S>, val mapper: (S) -> T, val reverseMapper: (T) -> S) : MutableObservableProperty<T> {
 
     val actionToWrapper = HashMap<(T) -> Unit, Wrapper>()
 
@@ -76,14 +76,14 @@ class KObservableMapped<S, T>(val actualObservable: ObservableProperty<S>, val m
         }
 }
 
-inline fun <S, T> MutableObservableProperty<S>.mapObservable(noinline mapper: (S) -> T, noinline reverseMapper: (T) -> S): KObservableMapped<S, T> {
-    return KObservableMapped(this, mapper, reverseMapper)
+inline fun <S, T> MutableObservableProperty<S>.mapObservable(noinline mapper: (S) -> T, noinline reverseMapper: (T) -> S): ObservablePropertyMapped<S, T> {
+    return ObservablePropertyMapped(this, mapper, reverseMapper)
 }
 
-inline fun <S, T> ObservableProperty<S>.mapReadOnly(noinline mapper: (S) -> T): KObservableMapped<S, T> {
-    return KObservableMapped(this, mapper, { throw IllegalAccessException() })
+inline fun <S, T> ObservableProperty<S>.mapReadOnly(noinline mapper: (S) -> T): ObservablePropertyMapped<S, T> {
+    return ObservablePropertyMapped(this, mapper, { throw IllegalAccessException() })
 }
 
-inline fun <T> ObservableProperty<T?>.notNull(default: T): KObservableMapped<T?, T> {
-    return KObservableMapped(this, { it ?: default }, { it })
+inline fun <T> ObservableProperty<T?>.notNull(default: T): ObservablePropertyMapped<T?, T> {
+    return ObservablePropertyMapped(this, { it ?: default }, { it })
 }

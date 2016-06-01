@@ -1,6 +1,8 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.list
 
 import com.ivieleague.kotlin.Disposable
+import com.ivieleague.kotlin.observable.property.ObservablePropertyReference
+import com.ivieleague.kotlin.observable.property.StandardObservableProperty
 import com.ivieleague.kotlin.runAll
 import java.util.*
 

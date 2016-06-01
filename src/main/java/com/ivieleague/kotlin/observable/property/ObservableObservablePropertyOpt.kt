@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 import com.ivieleague.kotlin.Disposable
 
@@ -25,7 +25,12 @@ class ObservableObservablePropertyOpt<T>(initialObservable: MutableObservablePro
     override var value: T?
         get() = observable?.value
         set(value) {
-            observable?.value = value ?: return
+            val obs = observable
+            if (obs is MutableObservableProperty && value != null) {
+                obs.value = value
+            } else {
+                throw IllegalAccessException()
+            }
         }
 
     override fun dispose() {

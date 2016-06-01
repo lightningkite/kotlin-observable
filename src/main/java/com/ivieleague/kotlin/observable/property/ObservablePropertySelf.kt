@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable
+package com.ivieleague.kotlin.observable.property
 
 /**
  * Created by jivie on 4/7/16.
