@@ -20,7 +20,6 @@ abstract class ObservablePropertyBase<T>() : MutableObservableProperty<T> {
     override fun add(element: (T) -> Unit): Boolean = list.add(element)
     override fun addAll(elements: Collection<(T) -> Unit>): Boolean = list.addAll(elements)
 
-    open fun update() = update(value)
     fun update(value: T) {
         for (listener in list) {
             listener(value)
