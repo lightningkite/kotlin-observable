@@ -10,7 +10,7 @@ interface ObservableProperty<T> : MutableCollection<(T) -> Unit> {
     /**
      * The current value of the observable property.
      */
-    val value:T
+    val value: T
 
     operator fun getValue(thisRef: Any?, prop: KProperty<*>): T {
         return value

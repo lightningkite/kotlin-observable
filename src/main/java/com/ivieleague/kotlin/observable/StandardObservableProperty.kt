@@ -8,7 +8,7 @@ open class StandardObservableProperty<T>(
 ) : ObservablePropertyBase<T>() {
 
     override var value: T = initValue
-        set(value){
+        set(value) {
             field = value
             update(value)
         }

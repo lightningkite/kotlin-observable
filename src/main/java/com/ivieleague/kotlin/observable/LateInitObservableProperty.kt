@@ -1,6 +1,5 @@
 package com.ivieleague.kotlin.observable
 
-import com.ivieleague.kotlin.observable.ObservableProperty
 import java.util.*
 
 /**

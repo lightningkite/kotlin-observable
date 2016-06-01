@@ -67,8 +67,8 @@ class KObservableMapped<S, T>(val actualObservable: ObservableProperty<S>, val m
 
     override var value: T
         get() = mapper(actualObservable.value)
-        set(value){
-            if(actualObservable is MutableObservableProperty) {
+        set(value) {
+            if (actualObservable is MutableObservableProperty) {
                 actualObservable.value = reverseMapper(value)
             } else {
                 throw IllegalAccessException()

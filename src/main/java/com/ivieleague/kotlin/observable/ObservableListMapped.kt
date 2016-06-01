@@ -32,7 +32,7 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override fun replace(list: List<E>) = source.replace(list.map(reverseMapper))
 
     val listenerMapper = { input: (E, Int) -> Unit ->
-        { element:S, index:Int ->
+        { element: S, index: Int ->
             input(mapper(element), index)
         }
     }
@@ -41,8 +41,8 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override val onChange: MutableSet<(E, Int) -> Unit> get() = source.onChange.map(listenerMapper)
 
     override val onUpdate = source.onUpdate.mapObservable<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped }, { throw IllegalAccessException() })
-    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.map({ input -> { input(this) }})
+    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.map({ input -> { input(this) } })
 }
 
 fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
-fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, {throw IllegalArgumentException()})
+fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, { throw IllegalArgumentException() })
