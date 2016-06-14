@@ -1,8 +1,7 @@
 package com.ivieleague.kotlin.observable.list
 
 import com.ivieleague.kotlin.Disposable
-import com.ivieleague.kotlin.collection.addSorted
-import com.ivieleague.kotlin.collection.map
+import com.ivieleague.kotlin.collection.mapped
 import com.ivieleague.kotlin.observable.property.ObservablePropertyReference
 import com.ivieleague.kotlin.runAll
 import java.util.*
@@ -10,18 +9,23 @@ import java.util.*
 /**
  * Created by jivie on 5/23/16.
  */
-class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> Boolean) : ObservableList<E>, Disposable {
+class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionIndex: (List<E>, E) -> Int) : ObservableList<E>, Disposable {
 
     val indexList = ArrayList<Int>()
+    val indexListMapped = indexList.mapped<Int, E>(
+            { it: Int -> source[it] },
+            { it: E -> indexList.indexOf(source.indexOf(it)) }
+    )
 
-    val indexCompare = { a: Int, b: Int -> sorter(source!![a], source!![b]) }
-    var listenerSet: ObservableListListenerSet<E>? = null
     var source: ObservableList<E> = sourceInit
         set(value) {
             source.removeListenerSet(listenerSet!!)
             field = value
             newSetup()
         }
+
+    fun indexGetInsertionIndex(item: E) = getInsertionIndex(indexListMapped, item)
+    var listenerSet: ObservableListListenerSet<E>? = null
 
     init {
         newSetup()
@@ -30,7 +34,8 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
     private fun newSetup() {
         indexList.clear()
         source.forEachIndexed { index, item ->
-            indexList.addSorted(index, indexCompare)
+            val sortedIndex = indexGetInsertionIndex(item)
+            indexList.add(sortedIndex, index)
         }
         listenerSet = ObservableListListenerSet(
                 onAddListener = { item, index ->
@@ -38,7 +43,8 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
                         if (indexList[i] >= index)
                             indexList[i]++
                     }
-                    val sortedIndex = indexList.addSorted(index, indexCompare)
+                    val sortedIndex = indexGetInsertionIndex(item)
+                    indexList.add(sortedIndex, index)
                     onAdd.runAll(item, sortedIndex)
                 },
                 onRemoveListener = { item, index ->
@@ -55,13 +61,15 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
                     indexList.removeAt(removeSortedIndex)
                     onRemove.runAll(item, removeSortedIndex)
 
-                    val addSortedIndex = indexList.addSorted(index, indexCompare)
-                    onChange.runAll(item, addSortedIndex)
+                    val sortedIndex = indexGetInsertionIndex(item)
+                    indexList.add(sortedIndex, index)
+                    onChange.runAll(item, sortedIndex)
                 },
                 onReplaceListener = {
                     indexList.clear()
                     it.forEachIndexed { index, item ->
-                        indexList.addSorted(index, indexCompare)
+                        val sortedIndex = indexGetInsertionIndex(item)
+                        indexList.add(sortedIndex, index)
                     }
                     onReplace.runAll(this)
                 }
@@ -97,7 +105,7 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
 
     override fun listIterator(): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun listIterator(index: Int): MutableListIterator<E> = throw UnsupportedOperationException()
-    override fun iterator(): MutableIterator<E> = indexList.iterator().map({ source[it] }, { indexOf(it) })
+    override fun iterator(): MutableIterator<E> = indexList.iterator().mapped({ source[it] }, { indexOf(it) })
     override fun replace(list: List<E>) = source.replace(list)
 
     val listenerMapper = { input: (E, Int) -> Unit ->
@@ -122,7 +130,17 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, sorter: (E, E) -> B
 }
 
 inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E>
-        = ObservableListSorted(this, sorter)
+        = ObservableListSorted(this, { list, item ->
+    if (list.isEmpty())
+        0
+    else {
+        val res = list.indexOfFirst { sorter(item, it) }
+        if (res == -1) list.size else res
+    }
+})
+
+inline fun <E> ObservableList<E>.sortedWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
+        = ObservableListSorted(this, getInsertionIndex)
 
 fun main(args: Array<String>) {
     //test

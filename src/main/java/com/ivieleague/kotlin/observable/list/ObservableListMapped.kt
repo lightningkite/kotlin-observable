@@ -1,6 +1,6 @@
 package com.ivieleague.kotlin.observable.list
 
-import com.ivieleague.kotlin.collection.map
+import com.ivieleague.kotlin.collection.mapped
 import com.ivieleague.kotlin.observable.property.mapReadOnly
 
 /**
@@ -27,9 +27,9 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override fun set(index: Int, element: E): E = mapper(source.set(index, reverseMapper(element)))
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = source.subList(fromIndex, toIndex).map(mapper).toMutableList()
 
-    override fun listIterator(): MutableListIterator<E> = source.listIterator().map(mapper, reverseMapper)
-    override fun listIterator(index: Int): MutableListIterator<E> = source.listIterator(index).map(mapper, reverseMapper)
-    override fun iterator(): MutableIterator<E> = source.iterator().map(mapper, reverseMapper)
+    override fun listIterator(): MutableListIterator<E> = source.listIterator().mapped(mapper, reverseMapper)
+    override fun listIterator(index: Int): MutableListIterator<E> = source.listIterator(index).mapped(mapper, reverseMapper)
+    override fun iterator(): MutableIterator<E> = source.iterator().mapped(mapper, reverseMapper)
     override fun replace(list: List<E>) = source.replace(list.map(reverseMapper))
 
     val listenerMapper = { input: (E, Int) -> Unit ->
@@ -37,12 +37,12 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
             input(mapper(element), index)
         }
     }
-    override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.map(listenerMapper)
-    override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.map(listenerMapper)
-    override val onChange: MutableSet<(E, Int) -> Unit> get() = source.onChange.map(listenerMapper)
+    override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.mapped(listenerMapper)
+    override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.mapped(listenerMapper)
+    override val onChange: MutableSet<(E, Int) -> Unit> get() = source.onChange.mapped(listenerMapper)
 
     override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
-    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.map({ input -> { input(this) } })
+    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapped({ input -> { input(this) } })
 }
 
 fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
