@@ -1,6 +1,6 @@
-package com.ivieleague.kotlin.observable.property
+package com.lightningkite.kotlin.observable.property
 
-import com.ivieleague.kotlin.Disposable
+import com.lightningkite.kotlin.Disposable
 
 /**
  * Created by jivie on 4/5/16.

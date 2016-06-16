@@ -1,6 +1,6 @@
-package com.ivieleague.kotlin.observable.list
+package com.lightningkite.kotlin.observable.list
 
-import com.ivieleague.kotlin.observable.property.ObservableProperty
+import com.lightningkite.kotlin.observable.property.ObservableProperty
 
 /**
  * Allows you to observe the changes to a list.

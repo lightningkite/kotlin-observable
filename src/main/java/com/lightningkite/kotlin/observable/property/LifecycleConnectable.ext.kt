@@ -1,7 +1,7 @@
-package com.ivieleague.kotlin.observable.property
+package com.lightningkite.kotlin.observable.property
 
-import com.ivieleague.kotlin.lifecycle.LifecycleConnectable
-import com.ivieleague.kotlin.lifecycle.LifecycleListener
+import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.lifecycle.LifecycleListener
 
 /**
  * Extensions that allow using ObservablePropertys with the LifecycleConnectable.

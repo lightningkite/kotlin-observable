@@ -1,6 +1,6 @@
-package com.ivieleague.kotlin.observable.property
+package com.lightningkite.kotlin.observable.property
 
-import com.ivieleague.kotlin.runAll
+import com.lightningkite.kotlin.runAll
 import kotlin.reflect.KProperty
 
 /**

@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable.list
+package com.lightningkite.kotlin.observable.list
 
 /**
  * Created by jivie on 5/5/16.

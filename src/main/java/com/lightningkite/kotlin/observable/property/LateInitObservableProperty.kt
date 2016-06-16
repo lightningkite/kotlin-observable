@@ -1,4 +1,4 @@
-package com.ivieleague.kotlin.observable.property
+package com.lightningkite.kotlin.observable.property
 
 /**
  * An observable that doesn't have to be set at its creation.
