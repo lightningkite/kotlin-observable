@@ -10,7 +10,7 @@ class ObservableObservablePropertyOpt<T>(initialObservable: MutableObservablePro
         super.update(it)
     }
 
-    var observable: MutableObservableProperty<T>? = null
+    var observable: ObservableProperty<T>? = null
         set(value) {
             field?.remove(myListener)
             field = value
