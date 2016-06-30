@@ -65,7 +65,39 @@ fun <A, B, C> LifecycleConnectable.bind(
 
         override fun onStop() {
             observableA.remove(itemA)
+            observableB.remove(itemB)
             observableC.remove(itemC)
+        }
+    })
+}
+
+fun <A, B, C, D> LifecycleConnectable.bind(
+        observableA: ObservableProperty<A>,
+        observableB: ObservableProperty<B>,
+        observableC: ObservableProperty<C>,
+        observableD: ObservableProperty<D>,
+        action: (A, B, C, D) -> Unit
+) {
+    connect(object : LifecycleListener {
+
+        val itemA = { item: A -> action(item, observableB.value, observableC.value, observableD.value) }
+        val itemB = { item: B -> action(observableA.value, item, observableC.value, observableD.value) }
+        val itemC = { item: C -> action(observableA.value, observableB.value, item, observableD.value) }
+        val itemD = { item: D -> action(observableA.value, observableB.value, observableC.value, item) }
+
+        override fun onStart() {
+            observableA.add(itemA)
+            observableB.add(itemB)
+            observableC.add(itemC)
+            observableD.add(itemD)
+            action(observableA.value, observableB.value, observableC.value, observableD.value)
+        }
+
+        override fun onStop() {
+            observableA.remove(itemA)
+            observableB.remove(itemB)
+            observableC.remove(itemC)
+            observableD.remove(itemD)
         }
     })
 }
