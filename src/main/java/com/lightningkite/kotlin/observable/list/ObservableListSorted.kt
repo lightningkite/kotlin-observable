@@ -2,7 +2,7 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.mapped
-import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
+import com.lightningkite.kotlin.observable.property.ObservableProperty
 import com.lightningkite.kotlin.runAll
 import java.util.*
 
@@ -116,7 +116,7 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
     override val onChange = HashSet<(E, Int) -> Unit>()
-    override val onUpdate = ObservablePropertyReference<ObservableList<E>>({ this }, { replace(it) })
+    override val onUpdate: ObservableProperty<ObservableList<E>> get() = source.onUpdate
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()
 
