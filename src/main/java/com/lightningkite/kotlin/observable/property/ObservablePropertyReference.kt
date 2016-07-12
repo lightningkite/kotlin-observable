@@ -15,10 +15,10 @@ class ObservablePropertyReference<T>(val getterFun: () -> T, val setterFun: (T) 
         }
 }
 
-fun <T> KMutableProperty0<T>.toKObservableReference(): ObservablePropertyReference<T> {
+fun <T> KMutableProperty0<T>.toObservablePropertyReference(): ObservablePropertyReference<T> {
     return ObservablePropertyReference({ get() }, { set(it) })
 }
 
-fun <T, R> KMutableProperty1<R, T>.toKObservableReference(receiver: R): ObservablePropertyReference<T> {
+fun <T, R> KMutableProperty1<R, T>.toObservablePropertyReference(receiver: R): ObservablePropertyReference<T> {
     return ObservablePropertyReference({ get(receiver) }, { set(receiver, it) })
 }
