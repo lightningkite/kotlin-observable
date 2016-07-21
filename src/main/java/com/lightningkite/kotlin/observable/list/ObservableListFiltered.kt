@@ -1,6 +1,7 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.collection.addSorted
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.observable.property.StandardObservableProperty
 import com.lightningkite.kotlin.runAll
@@ -36,7 +37,7 @@ class ObservableListFiltered<E>(
     }
 
     //filtering
-    var passing = (full.indices).toSortedSet()
+    var passing = (full.indices).toMutableList()
 
     init {
         filterObs.add {
@@ -44,37 +45,61 @@ class ObservableListFiltered<E>(
                 passing.clear()
                 onReplace.runAll(this)
             } else {
-                var otherIndex = 0
-                for (i in full.indices) {
-                    val passes = filter(full[i])
-                    if (passes) {
-                        if (passing.add(i)) {
-                            onAdd.runAll(full[i], otherIndex)
+                var passingIndex = 0
+                for (fullIndex in full.indices) {
+                    var previouslyPassing = false
+                    while (true) {
+                        if (passing[passingIndex] > fullIndex) {
+                            previouslyPassing = false
+                            break
                         }
-                        otherIndex++
-                    } else {
-                        if (passing.remove(i)) {
-                            onRemove.runAll(full[i], otherIndex)
+                        if (passing[passingIndex] == fullIndex) {
+                            previouslyPassing = true
+                            break
                         }
+                        passingIndex++
+                    }
+
+                    val passes = filter(full[fullIndex])
+                    if (passes && !previouslyPassing) {
+                        //add to the list
+                        passing.add(passingIndex - 1, fullIndex)
+                        onAdd.runAll(full[fullIndex], passingIndex - 1)
+                    } else if (!passes && previouslyPassing) {
+                        //remove from the list
+                        passing.removeAt(passingIndex)
+                        onRemove.runAll(full[fullIndex], passingIndex)
                     }
                 }
+
+//                var otherIndex = 0
+//                var passingIndex = 0
+//                for (i in full.indices) {
+//                    val passes = filter(full[i])
+//                    if(filteredIndex )
+//                    if (passes) {
+//                        if (passing.add(i)) {
+//                            onAdd.runAll(full[i], otherIndex)
+//                        }
+//                        otherIndex++
+//                    } else {
+//                        if (passing.remove(i)) {
+//                            onRemove.runAll(full[i], otherIndex)
+//                        }
+//                    }
+//                }
             }
             onUpdate.runAll(this)
         }
         bind(full.onAdd) { item, index ->
             val passes = filter(item)
             if (passes) {
-                val iterator = passing.iterator()
-                val toAdd = ArrayList<Int>()
-                while (iterator.hasNext()) {
-                    val i = iterator.next()
-                    if (i > index) {
-                        iterator.remove()
-                        toAdd += i + 1
+                for (indexIndex in passing.indices) {
+                    if (passing[indexIndex] >= index) {
+                        passing[indexIndex] += 1
                     }
                 }
-                passing.addAll(toAdd)
-                passing.add(index)
+                passing.addSorted(index)
                 onAdd.runAll(item, passing.indexOf(index))
                 onUpdate.runAll(this)
             }
@@ -85,7 +110,7 @@ class ObservableListFiltered<E>(
             val passed = indexOf != -1
             if (passes != passed) {
                 if (passes) {
-                    passing.add(index)
+                    passing.addSorted(index)
                     onAdd.runAll(item, index)
                     onUpdate.runAll(this)
                 } else {
@@ -101,17 +126,12 @@ class ObservableListFiltered<E>(
             val passes = filter(item)
             if (passes) {
                 val oldIndexOf = passing.indexOf(index)
-                passing.remove(index)
-                val iterator = passing.iterator()
-                val toAdd = ArrayList<Int>()
-                while (iterator.hasNext()) {
-                    val i = iterator.next()
-                    if (i > index) {
-                        iterator.remove()
-                        toAdd += i - 1
+                for (indexIndex in passing.indices) {
+                    if (passing[indexIndex] > index) {
+                        passing[indexIndex] -= 1
                     }
                 }
-                passing.addAll(toAdd)
+                passing.remove(index)
                 onRemove.runAll(item, oldIndexOf)
                 onUpdate.runAll(this)
             }
@@ -158,17 +178,12 @@ class ObservableListFiltered<E>(
     override fun listIterator(): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun listIterator(index: Int): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun iterator(): MutableIterator<E> = object : MutableIterator<E> {
-        var iterator = passing.iterator()
-        var current = -1
-        override fun hasNext(): Boolean = iterator.hasNext()
-        override fun next(): E {
-            current = iterator.next()
-            return full[current]
-        }
+        val inner = passing.iterator()
+        override fun hasNext(): Boolean = inner.hasNext()
+        override fun next(): E = full[inner.next()]
 
         override fun remove() {
-            iterator.remove()
-            full.removeAt(current)
+            throw UnsupportedOperationException()
         }
     }
 
@@ -178,3 +193,24 @@ class ObservableListFiltered<E>(
     override fun lastIndexOf(element: E): Int = passing.lastIndexOf(full.lastIndexOf(element))
     override val size: Int get() = passing.size
 }
+
+//fun main(vararg args: String): Unit {
+//    val list = ObservableListWrapper<String>(mutableListOf("asdc", "asdf", "sdfg", "dfgh", "fghj"))
+//    val filtered = ObservableListFiltered(list)
+//
+//    filtered.addListenerSet(ObservableListListenerSet(
+//            onAddListener = { item, index -> println("onAddListener: $item at $index") },
+//            onRemoveListener = { item, index -> println("onRemoveListener: $item at $index") },
+//            onChangeListener = { item, index -> println("onChangeListener: $item at $index") },
+//            onReplaceListener = { list -> }
+//    ))
+//
+//    println(filtered.joinToString())
+//    filtered.filter = { it.contains("df") }
+//    println(filtered.passing)
+//    println(filtered.joinToString())
+//    val indexOf = list.indexOf("sdfg")
+//    list.remove("sdfg")
+//    list.add(indexOf, "sdfg")
+//    println(filtered.joinToString())
+//}

@@ -59,11 +59,16 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
                 onChangeListener = { item, index ->
                     val removeSortedIndex = indexList.indexOf(index)
                     indexList.removeAt(removeSortedIndex)
-                    onRemove.runAll(item, removeSortedIndex)
-
                     val sortedIndex = indexGetInsertionIndex(item)
-                    indexList.add(sortedIndex, index)
-                    onChange.runAll(item, sortedIndex)
+
+                    if (removeSortedIndex != sortedIndex) {
+                        onRemove.runAll(item, removeSortedIndex)
+                        indexList.add(sortedIndex, index)
+                        onAdd.runAll(item, sortedIndex)
+                    } else {
+                        indexList.add(sortedIndex, index)
+                        onChange.runAll(item, removeSortedIndex)
+                    }
                 },
                 onReplaceListener = {
                     indexList.clear()
@@ -83,11 +88,11 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
         listenerSet = null
     }
 
-    override val size: Int get() = source.size
+    override val size: Int get() = indexList.size
 
     override fun contains(element: E): Boolean = source.contains(element)
     override fun containsAll(elements: Collection<E>): Boolean = source.containsAll(elements)
-    override fun get(index: Int): E = source.get(indexList[index]) ?: throw IllegalStateException("No source specified.")
+    override fun get(index: Int): E = source[indexList[index]] ?: throw IllegalStateException("No source specified.")
     override fun indexOf(element: E): Int = indexList.indexOf(source.indexOf(element))
     override fun lastIndexOf(element: E): Int = indexList.indexOf(source.lastIndexOf(element))
     override fun isEmpty(): Boolean = source.isEmpty()
