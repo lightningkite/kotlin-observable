@@ -48,7 +48,7 @@ class ObservableListFiltered<E>(
                 var passingIndex = 0
                 for (fullIndex in full.indices) {
                     var previouslyPassing = false
-                    while (true) {
+                    while (passingIndex < passing.size) {
                         if (passing[passingIndex] > fullIndex) {
                             previouslyPassing = false
                             break
@@ -63,7 +63,7 @@ class ObservableListFiltered<E>(
                     val passes = filter(full[fullIndex])
                     if (passes && !previouslyPassing) {
                         //add to the list
-                        passing.add(passingIndex - 1, fullIndex)
+                        passing.add((passingIndex - 1).coerceAtLeast(0), fullIndex)
                         onAdd.runAll(full[fullIndex], passingIndex - 1)
                     } else if (!passes && previouslyPassing) {
                         //remove from the list
