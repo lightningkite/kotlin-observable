@@ -1,6 +1,8 @@
 package com.lightningkite.kotlin.observable.property
 
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.observable.list.ObservableList
+import com.lightningkite.kotlin.observable.list.ObservableListWrapper
 
 /**
  * Created by jivie on 6/16/16.
@@ -24,4 +26,12 @@ fun <A, B> ObservableProperty<A?>.subOpt(lifecycle: LifecycleConnectable, mapper
             obs.observable = null
     }
     return obs
+}
+
+fun <A> ObservableProperty<List<A>>.toObservableList(lifecycle: LifecycleConnectable): ObservableList<A> {
+    val list = ObservableListWrapper<A>()
+    lifecycle.bind(this) {
+        list.replace(it)
+    }
+    return list
 }
