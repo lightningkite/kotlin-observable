@@ -103,7 +103,31 @@ class ObservableListWrapper<E>(
     override fun containsAll(elements: Collection<E>): Boolean = collection.containsAll(elements)
     override fun listIterator(): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun listIterator(index: Int): MutableListIterator<E> = throw UnsupportedOperationException()
-    override fun iterator(): MutableIterator<E> = collection.iterator()
+    /**
+     * WARNING:
+     * This iterator MAY have issues when it removes things, because there is no way to know if the iterator is done with its work.
+     * It will not call onUpdate, and calls onRemove while iterating.
+     *
+     * YOU HAVE BEEN WARNED.
+     */
+    override fun iterator(): MutableIterator<E> = object : MutableIterator<E> {
+        val inner = collection.iterator()
+        var lastIndex: Int = -1
+        var lastElement: E? = null
+        override fun hasNext(): Boolean = inner.hasNext()
+        override fun next(): E {
+            val element = inner.next()
+            lastElement = element
+            lastIndex++
+            return element
+        }
+
+        override fun remove() {
+            inner.remove()
+            onRemove.runAll(lastElement!!, lastIndex)
+        }
+
+    }
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = collection.subList(fromIndex, toIndex)
     override fun get(index: Int): E = collection[index]
     override fun indexOf(element: E): Int = collection.indexOf(element)
