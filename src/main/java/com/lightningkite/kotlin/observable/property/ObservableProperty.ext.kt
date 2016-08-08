@@ -8,6 +8,11 @@ import com.lightningkite.kotlin.observable.list.ObservableListWrapper
  * Created by jivie on 6/16/16.
  */
 
+fun <A> ObservableProperty<A>.addAndInvoke(lambda: (A) -> Unit) {
+    add(lambda)
+    lambda.invoke(value)
+}
+
 fun <A, B> ObservableProperty<A>.sub(lifecycle: LifecycleConnectable, mapper: (A) -> ObservableProperty<B>): ObservableObservableProperty<B> {
     val obs = ObservableObservableProperty(mapper(value))
     lifecycle.bind(this) {
