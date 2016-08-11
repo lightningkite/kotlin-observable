@@ -45,5 +45,11 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapped({ input -> { input(this) } })
 }
 
+@Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper, reverseMapper)", "com.lightningkite.kotlin.observable.list.mapping"))
 fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
+
+@Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper)", "com.lightningkite.kotlin.observable.list.mapping"))
 fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, { throw IllegalArgumentException() })
+
+fun <S, E> ObservableList<S>.mapping(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
+fun <S, E> ObservableList<S>.mapping(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, { throw IllegalArgumentException() })

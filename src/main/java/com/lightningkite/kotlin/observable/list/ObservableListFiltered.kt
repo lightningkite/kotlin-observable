@@ -194,6 +194,9 @@ class ObservableListFiltered<E>(
     override val size: Int get() = passing.size
 }
 
+inline fun <E> ObservableList<E>.filtering(): ObservableListFiltered<E>
+        = ObservableListFiltered(this)
+
 //fun main(vararg args: String): Unit {
 //    val list = ObservableListWrapper<String>(mutableListOf("asdc", "asdf", "sdfg", "dfgh", "fghj"))
 //    val filtered = ObservableListFiltered(list)

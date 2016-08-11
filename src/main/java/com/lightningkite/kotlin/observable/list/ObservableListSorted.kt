@@ -134,7 +134,10 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
 
 }
 
-inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E>
+@Deprecated("This has been renamed to 'sorting' because it sorts on the fly.", ReplaceWith("sorting(sorter)", "com.lightningkite.kotlin.observable.list.sorting"))
+inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> = sorting(sorter)
+
+inline fun <E> ObservableList<E>.sorting(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E>
         = ObservableListSorted(this, { list, item ->
     if (list.isEmpty())
         0
@@ -144,7 +147,11 @@ inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): Obs
     }
 })
 
+@Deprecated("This has been renamed to 'sortingWithInsertionIndex' because it sorts on the fly.", ReplaceWith("sortingWithInsertionIndex(getInsertionIndex)", "com.lightningkite.kotlin.observable.list.sortingWithInsertionIndex"))
 inline fun <E> ObservableList<E>.sortedWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
+        = ObservableListSorted(this, getInsertionIndex)
+
+inline fun <E> ObservableList<E>.sortingWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
         = ObservableListSorted(this, getInsertionIndex)
 
 fun main(args: Array<String>) {
