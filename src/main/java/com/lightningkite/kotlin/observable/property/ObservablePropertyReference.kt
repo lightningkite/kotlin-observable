@@ -12,6 +12,7 @@ class ObservablePropertyReference<T>(val getterFun: () -> T, val setterFun: (T) 
         get() = getterFun()
         set(value) {
             setterFun(value)
+            update(value)
         }
 }
 
