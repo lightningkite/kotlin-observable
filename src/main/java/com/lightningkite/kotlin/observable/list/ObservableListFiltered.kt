@@ -63,8 +63,8 @@ class ObservableListFiltered<E>(
                     val passes = filter(full[fullIndex])
                     if (passes && !previouslyPassing) {
                         //add to the list
-                        passing.add((passingIndex - 1).coerceAtLeast(0), fullIndex)
-                        onAdd.runAll(full[fullIndex], passingIndex - 1)
+                        val addPos = passing.addSorted(fullIndex)
+                        onAdd.runAll(full[fullIndex], addPos)
                     } else if (!passes && previouslyPassing) {
                         //remove from the list
                         passing.removeAt(passingIndex)
