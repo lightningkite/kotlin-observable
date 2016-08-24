@@ -15,4 +15,14 @@ interface ObservableList<E> : MutableList<E> {
     val onRemove: MutableSet<(E, Int) -> Unit>
 
     fun replace(list: List<E>)
+    fun updateAt(index: Int) {
+        this[index] = this[index]
+    }
+
+    fun update(element: E): Boolean {
+        val index = indexOf(element)
+        if (index != -1)
+            updateAt(index)
+        return index != -1
+    }
 }
