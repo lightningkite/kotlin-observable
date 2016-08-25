@@ -110,12 +110,12 @@ class ObservableListFiltered<E>(
             val passed = indexOf != -1
             if (passes != passed) {
                 if (passes) {
-                    passing.addSorted(index)
-                    onAdd.runAll(item, index)
+                    val insertionIndex = passing.addSorted(index)
+                    onAdd.runAll(item, insertionIndex)
                     onUpdate.runAll(this)
                 } else {
-                    passing.remove(index)
-                    onRemove.runAll(item, index)
+                    passing.removeAt(indexOf)
+                    onRemove.runAll(item, indexOf)
                     onUpdate.runAll(this)
                 }
             } else {
