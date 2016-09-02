@@ -123,18 +123,16 @@ class ObservableListFiltered<E>(
             }
         }
         bind(full.onRemove) { item, index ->
-            val passes = filter(item)
-            if (passes) {
-                val oldIndexOf = passing.indexOf(index)
-                for (indexIndex in passing.indices) {
-                    if (passing[indexIndex] > index) {
-                        passing[indexIndex] -= 1
-                    }
+            val oldIndexOf = passing.indexOf(index)
+            if (oldIndexOf == -1) return@bind
+            for (indexIndex in passing.indices) {
+                if (passing[indexIndex] > index) {
+                    passing[indexIndex] -= 1
                 }
-                passing.remove(index)
-                onRemove.runAll(item, oldIndexOf)
-                onUpdate.runAll(this)
             }
+            passing.remove(index)
+            onRemove.runAll(item, oldIndexOf)
+            onUpdate.runAll(this)
         }
         bind(full.onReplace) {
             passing.clear()
