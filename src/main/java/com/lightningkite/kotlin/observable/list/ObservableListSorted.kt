@@ -49,12 +49,14 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
                 },
                 onRemoveListener = { item, index ->
                     val sortedIndex = indexList.indexOf(index)
-                    indexList.removeAt(sortedIndex)
-                    for (i in indexList.indices) {
-                        if (indexList[i] >= index)
-                            indexList[i]--
+                    if (sortedIndex != -1) {
+                        indexList.removeAt(sortedIndex)
+                        for (i in indexList.indices) {
+                            if (indexList[i] >= index)
+                                indexList[i]--
+                        }
+                        onRemove.runAll(item, sortedIndex)
                     }
-                    onRemove.runAll(item, sortedIndex)
                 },
                 onChangeListener = { item, index ->
                     val removeSortedIndex = indexList.indexOf(index)
