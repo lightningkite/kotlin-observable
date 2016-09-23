@@ -141,3 +141,5 @@ class ObservableListWrapper<E>(
         onUpdate.runAll(this)
     }
 }
+
+fun <E> observableListOf(vararg items: E) = ObservableListWrapper(items.toMutableList())
