@@ -58,18 +58,21 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
                         onRemove.runAll(item, sortedIndex)
                     }
                 },
-                onChangeListener = { item, index ->
+                onMoveListener = { item, oldIndex, index ->
+                    //Do nothing.  We don't care what order it is; we're sorting it!
+                },
+                onChangeListener = { old, item, index ->
                     val removeSortedIndex = indexList.indexOf(index)
                     indexList.removeAt(removeSortedIndex)
                     val sortedIndex = indexGetInsertionIndex(item)
 
                     if (removeSortedIndex != sortedIndex) {
-                        onRemove.runAll(item, removeSortedIndex)
+                        onRemove.runAll(old, removeSortedIndex)
                         indexList.add(sortedIndex, index)
                         onAdd.runAll(item, sortedIndex)
                     } else {
                         indexList.add(sortedIndex, index)
-                        onChange.runAll(item, removeSortedIndex)
+                        onChange.runAll(old, item, removeSortedIndex)
                     }
                 },
                 onReplaceListener = {
@@ -107,8 +110,11 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
     override fun removeAll(elements: Collection<E>): Boolean = source.removeAll(elements)
     override fun removeAt(index: Int): E = source.removeAt(indexList[index])
     override fun retainAll(elements: Collection<E>): Boolean = source.retainAll(elements)
-    override fun set(index: Int, element: E): E = source.set(index, element)
+    override fun set(index: Int, element: E): E = source.set(indexList[index], element)
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = indexList.subList(fromIndex, toIndex).map { source[it] }.toMutableList()
+    override fun move(fromIndex: Int, toIndex: Int) {
+        throw UnsupportedOperationException("You can't rearrange items in a sorted list.")
+    }
 
     override fun listIterator(): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun listIterator(index: Int): MutableListIterator<E> = throw UnsupportedOperationException()
@@ -122,7 +128,8 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
     }
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
-    override val onChange = HashSet<(E, Int) -> Unit>()
+    override val onChange = HashSet<(E, E, Int) -> Unit>()
+    override val onMove = HashSet<(E, Int, Int) -> Unit>()
     override val onUpdate: ObservableProperty<ObservableList<E>> get() = source.onUpdate
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()

@@ -87,6 +87,14 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         source[i.first].let(mapper).add(i.second, element)
     }
 
+    override fun move(fromIndex: Int, toIndex: Int) {
+        val from = getIndicies(fromIndex)
+        val to = getIndicies(if (toIndex > fromIndex) toIndex - 1 else toIndex)
+        //TODO: Add/remove?
+        if (from.first != to.first) throw UnsupportedOperationException("You can't move an item between lists.")
+        source[from.first].let(mapper).move(from.second, to.second)
+    }
+
     override fun addAll(elements: Collection<E>): Boolean {
         return source.last().let(mapper).addAll(elements)
     }
@@ -150,16 +158,17 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
 
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
-    override val onChange = HashSet<(E, Int) -> Unit>()
+    override val onChange = HashSet<(E, E, Int) -> Unit>()
+    override val onMove = HashSet<(E, Int, Int) -> Unit>()
     override val onUpdate = ObservablePropertyReference<ObservableList<E>>({ this@ObservableListFlatMapping }, { throw IllegalAccessException() })
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()
 
     fun onTotalItemAdd(item: S, index: Int) {
-        val size = item.let(mapper).size
-        val newBoundary = insertBoundaryIndex(index, size)
-        for (i in 0..size - 1) {
-            onAdd.runAll(item.let(mapper)[i], newBoundary + i)
+        val list = item.let(mapper)
+        val newBoundary = insertBoundaryIndex(index, list.size)
+        for (i in 0..list.size - 1) {
+            onAdd.runAll(list[i], newBoundary + i)
         }
     }
 
@@ -206,8 +215,14 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                     list.removeListenerSet(set)
                 }
             },
-            onChangeListener = { item, index ->
-                onTotalItemRemove(item, index)
+            onMoveListener = { item, oldIndex, index ->
+                //TODO could move each item
+                onTotalItemRemove(item, oldIndex)
+                onTotalItemAdd(item, index)
+            },
+            onChangeListener = { old, item, index ->
+                //TODO could change ones that are there then remove/add until fully used
+                onTotalItemRemove(old, index)
                 onTotalItemAdd(item, index)
             },
             onReplaceListener = { list ->
@@ -230,11 +245,17 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 modifyIndiciesAfter(fullIndex, -1)
                 onRemove.runAll(item, fullIndex)
             },
-            onChangeListener = { item, index ->
+            onMoveListener = { item, oldIndex, index ->
+                val myIndex = source.indexOf(itemContainingList)
+                val oldTotalIndex = getIndex(myIndex to oldIndex)
+                val newTotalIndex = getIndex(myIndex to index)
+                onMove.runAll(item, oldTotalIndex, newTotalIndex)
+            },
+            onChangeListener = { old, item, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                onChange.runAll(item, fullIndex)
+                onChange.runAll(old, item, fullIndex)
             },
             onReplaceListener = { list ->
                 val myIndex = source.indexOf(itemContainingList)
@@ -246,9 +267,11 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
 
     init {
         reset()
+        source.addListenerSet(overallListenerSet)
     }
 
     override fun dispose() {
+        source.removeListenerSet(overallListenerSet)
         clearOldListeners()
     }
 }
@@ -266,7 +289,8 @@ fun main(vararg inputs: String) {
     flatMapped.addListenerSet(ObservableListListenerSet(
             onAddListener = { item, index -> println("Add $item at $index") },
             onRemoveListener = { item, index -> println("Remove $item at $index") },
-            onChangeListener = { item, index -> println("Change $item at $index") },
+            onMoveListener = { item, oldIndex, index -> println("Move $item from $oldIndex to $index") },
+            onChangeListener = { old, item, index -> println("Change $old to $item at $index") },
             onReplaceListener = { newList -> println("Replaced $newList") }
     ))
 

@@ -17,6 +17,7 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override fun lastIndexOf(element: E): Int = source.lastIndexOf(reverseMapper(element))
     override fun add(element: E): Boolean = source.add(reverseMapper(element))
     override fun add(index: Int, element: E) = source.add(index, reverseMapper(element))
+    override fun move(fromIndex: Int, toIndex: Int) = source.move(fromIndex, toIndex)
     override fun addAll(index: Int, elements: Collection<E>): Boolean = source.addAll(index, elements.map(reverseMapper))
     override fun addAll(elements: Collection<E>): Boolean = source.addAll(elements.map(reverseMapper))
     override fun clear() = source.clear()
@@ -39,7 +40,16 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     }
     override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.mapped(listenerMapper)
     override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.mapped(listenerMapper)
-    override val onChange: MutableSet<(E, Int) -> Unit> get() = source.onChange.mapped(listenerMapper)
+    override val onMove: MutableSet<(E, Int, Int) -> Unit> get() = source.onMove.mapped { input: (E, Int, Int) -> Unit ->
+        { element: S, oldIndex: Int, index: Int ->
+            input(mapper(element), oldIndex, index)
+        }
+    }
+    override val onChange: MutableSet<(E, E, Int) -> Unit> get() = source.onChange.mapped { input: (E, E, Int) -> Unit ->
+        { old: S, element: S, index: Int ->
+            input(mapper(old), mapper(element), index)
+        }
+    }
 
     override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
     override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapped({ input -> { input(this) } })
