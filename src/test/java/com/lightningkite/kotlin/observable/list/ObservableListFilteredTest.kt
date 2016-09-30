@@ -277,6 +277,27 @@ class ObservableListFilteredTest {
     }
 
     @Test
+    fun removeAtEnd() {
+        val (list, filtering) = makeTestData()
+
+        val removeIndex = filtering.lastIndex
+        val oldElement = filtering[removeIndex]
+        val originalSize = filtering.size
+
+        var callbackOccurred = false
+        filtering.onRemove += { char, index ->
+            assertEquals(char, oldElement)
+            assertEquals(removeIndex, index)
+
+            callbackOccurred = true
+        }
+        filtering.removeAt(removeIndex)
+
+        assertEquals(originalSize - 1, filtering.size)
+        assert(callbackOccurred, { "callback occurred" })
+    }
+
+    @Test
     fun move() {
         val (list, filtering) = makeTestData()
 
