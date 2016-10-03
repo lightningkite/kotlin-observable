@@ -126,6 +126,20 @@ class ObservableListFilteredTest {
         assert(callbackOccurred, { "callback occurred" })
     }
 
+    @Test
+    fun removeSourceMiss() {
+        val (list, filtering) = makeTestData()
+
+        val removeIndex = 3
+
+        filtering.onRemove += { char, index ->
+            fail()
+        }
+        list.removeAt(removeIndex)
+
+        filtering.last()
+    }
+
 //    @Test
 //    fun addAtSource(){
 //        val addIndex = 2
