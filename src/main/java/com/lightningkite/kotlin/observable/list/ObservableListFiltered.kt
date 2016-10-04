@@ -2,6 +2,8 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.addSorted
+import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.observable.property.StandardObservableProperty
 import com.lightningkite.kotlin.runAll
@@ -27,13 +29,24 @@ class ObservableListFiltered<E>(
 
     fun <T> bind(collection: MutableCollection<T>, element: T) {
         bindings.add(collection to element)
-        collection.add(element)
+    }
+
+    var connected = false
+    @Suppress("UNCHECKED_CAST")
+    fun setup() {
+        if (connected) return
+        for ((collection, element) in bindings) {
+            (collection as MutableCollection<Any?>).add(element)
+        }
+        connected = true
     }
 
     override fun dispose() {
+        if (!connected) return
         for ((collection, element) in bindings) {
             collection.remove(element)
         }
+        connected = false
     }
 
     //filtering
@@ -152,6 +165,7 @@ class ObservableListFiltered<E>(
             onReplace.runAll(this)
             onUpdate.runAll(this)
         }
+        setup()
     }
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
@@ -210,4 +224,34 @@ inline fun <E> ObservableList<E>.filtering(): ObservableListFiltered<E>
 inline fun <E> ObservableList<E>.filtering(noinline initFilter: (E) -> Boolean): ObservableListFiltered<E>
         = ObservableListFiltered(this).apply {
     filter = initFilter
+}
+
+inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable): ObservableListFiltered<E> {
+    val list = ObservableListFiltered(this)
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
+
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
+}
+
+inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable, noinline initFilter: (E) -> Boolean): ObservableListFiltered<E> {
+    val list = ObservableListFiltered(this).apply {
+        filter = initFilter
+    }
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
+
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
 }

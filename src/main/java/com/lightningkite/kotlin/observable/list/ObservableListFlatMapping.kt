@@ -1,6 +1,8 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.runAll
 import java.util.*
@@ -265,37 +267,38 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
             }
     )
 
-    init {
+    var connected = false
+    fun setup() {
+        if (connected) return
         reset()
         source.addListenerSet(overallListenerSet)
+        connected = true
+    }
+
+    init {
+        setup()
     }
 
     override fun dispose() {
+        if (!connected) return
         source.removeListenerSet(overallListenerSet)
         clearOldListeners()
+        connected = false
     }
 }
-
 fun <S, E> ObservableList<S>.flatMapping(mapper: (S) -> ObservableList<E>): ObservableListFlatMapping<S, E>
         = ObservableListFlatMapping(this, mapper)
 
-fun main(vararg inputs: String) {
-    val items = observableListOf(
-            observableListOf(1, 2, 3),
-            observableListOf(4, 5, 6),
-            observableListOf(7, 8, 9)
-    )
-    val flatMapped = items.flatMapping { it }
-    flatMapped.addListenerSet(ObservableListListenerSet(
-            onAddListener = { item, index -> println("Add $item at $index") },
-            onRemoveListener = { item, index -> println("Remove $item at $index") },
-            onMoveListener = { item, oldIndex, index -> println("Move $item from $oldIndex to $index") },
-            onChangeListener = { old, item, index -> println("Change $old to $item at $index") },
-            onReplaceListener = { newList -> println("Replaced $newList") }
-    ))
+inline fun <S, E> ObservableList<S>.flatMapping(lifecycle: LifecycleConnectable, noinline mapper: (S) -> ObservableList<E>): ObservableListFlatMapping<S, E> {
+    val list = ObservableListFlatMapping(this, mapper)
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
 
-    println(flatMapped.joinToString())
-
-    items[1].removeAt(1)
-    println(flatMapped.joinToString())
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
 }

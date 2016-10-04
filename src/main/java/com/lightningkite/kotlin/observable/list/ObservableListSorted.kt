@@ -1,7 +1,9 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
-import com.lightningkite.kotlin.collection.mapped
+import com.lightningkite.kotlin.collection.mapping
+import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservableProperty
 import com.lightningkite.kotlin.runAll
 import java.util.*
@@ -9,88 +11,83 @@ import java.util.*
 /**
  * Created by jivie on 5/23/16.
  */
-class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionIndex: (List<E>, E) -> Int) : ObservableList<E>, Disposable {
+class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionIndex: (List<E>, E) -> Int) : ObservableList<E>, Disposable {
 
     val indexList = ArrayList<Int>()
-    val indexListMapped = indexList.mapped<Int, E>(
+    val indexListMapped = indexList.mapping<Int, E>(
             { it: Int -> source[it] },
             { it: E -> indexList.indexOf(source.indexOf(it)) }
     )
 
-    var source: ObservableList<E> = sourceInit
-        set(value) {
-            source.removeListenerSet(listenerSet!!)
-            field = value
-            newSetup()
-        }
-
     fun indexGetInsertionIndex(item: E) = getInsertionIndex(indexListMapped, item)
-    var listenerSet: ObservableListListenerSet<E>? = null
+    var listenerSet: ObservableListListenerSet<E> = ObservableListListenerSet(
+            onAddListener = { item, index ->
+                for (i in indexList.indices) {
+                    if (indexList[i] >= index)
+                        indexList[i]++
+                }
+                val sortedIndex = indexGetInsertionIndex(item)
+                indexList.add(sortedIndex, index)
+                onAdd.runAll(item, sortedIndex)
+            },
+            onRemoveListener = { item, index ->
+                val sortedIndex = indexList.indexOf(index)
+                if (sortedIndex != -1) {
+                    indexList.removeAt(sortedIndex)
+                    for (i in indexList.indices) {
+                        if (indexList[i] >= index)
+                            indexList[i]--
+                    }
+                    onRemove.runAll(item, sortedIndex)
+                }
+            },
+            onMoveListener = { item, oldIndex, index ->
+                //Do nothing.  We don't care what order it is; we're sorting it!
+            },
+            onChangeListener = { old, item, index ->
+                val removeSortedIndex = indexList.indexOf(index)
+                indexList.removeAt(removeSortedIndex)
+                val sortedIndex = indexGetInsertionIndex(item)
+
+                if (removeSortedIndex != sortedIndex) {
+                    onRemove.runAll(old, removeSortedIndex)
+                    indexList.add(sortedIndex, index)
+                    onAdd.runAll(item, sortedIndex)
+                } else {
+                    indexList.add(sortedIndex, index)
+                    onChange.runAll(old, item, removeSortedIndex)
+                }
+            },
+            onReplaceListener = {
+                indexList.clear()
+                it.forEachIndexed { index, item ->
+                    val sortedIndex = indexGetInsertionIndex(item)
+                    indexList.add(sortedIndex, index)
+                }
+                onReplace.runAll(this)
+            }
+    )
 
     init {
-        newSetup()
+        setup()
     }
 
-    private fun newSetup() {
+    var connected = false
+    fun setup() {
+        if (connected) return
         indexList.clear()
         source.forEachIndexed { index, item ->
             val sortedIndex = indexGetInsertionIndex(item)
             indexList.add(sortedIndex, index)
         }
-        listenerSet = ObservableListListenerSet(
-                onAddListener = { item, index ->
-                    for (i in indexList.indices) {
-                        if (indexList[i] >= index)
-                            indexList[i]++
-                    }
-                    val sortedIndex = indexGetInsertionIndex(item)
-                    indexList.add(sortedIndex, index)
-                    onAdd.runAll(item, sortedIndex)
-                },
-                onRemoveListener = { item, index ->
-                    val sortedIndex = indexList.indexOf(index)
-                    if (sortedIndex != -1) {
-                        indexList.removeAt(sortedIndex)
-                        for (i in indexList.indices) {
-                            if (indexList[i] >= index)
-                                indexList[i]--
-                        }
-                        onRemove.runAll(item, sortedIndex)
-                    }
-                },
-                onMoveListener = { item, oldIndex, index ->
-                    //Do nothing.  We don't care what order it is; we're sorting it!
-                },
-                onChangeListener = { old, item, index ->
-                    val removeSortedIndex = indexList.indexOf(index)
-                    indexList.removeAt(removeSortedIndex)
-                    val sortedIndex = indexGetInsertionIndex(item)
-
-                    if (removeSortedIndex != sortedIndex) {
-                        onRemove.runAll(old, removeSortedIndex)
-                        indexList.add(sortedIndex, index)
-                        onAdd.runAll(item, sortedIndex)
-                    } else {
-                        indexList.add(sortedIndex, index)
-                        onChange.runAll(old, item, removeSortedIndex)
-                    }
-                },
-                onReplaceListener = {
-                    indexList.clear()
-                    it.forEachIndexed { index, item ->
-                        val sortedIndex = indexGetInsertionIndex(item)
-                        indexList.add(sortedIndex, index)
-                    }
-                    onReplace.runAll(this)
-                }
-        )
-        source.addListenerSet(listenerSet!!)
+        source.addListenerSet(listenerSet)
+        connected = true
     }
 
     override fun dispose() {
-        source.removeListenerSet(listenerSet!!)
-        source = ObservableListWrapper()
-        listenerSet = null
+        if (!connected) return
+        source.removeListenerSet(listenerSet)
+        connected = false
     }
 
     override val size: Int get() = indexList.size
@@ -118,7 +115,7 @@ class ObservableListSorted<E>(sourceInit: ObservableList<E>, val getInsertionInd
 
     override fun listIterator(): MutableListIterator<E> = throw UnsupportedOperationException()
     override fun listIterator(index: Int): MutableListIterator<E> = throw UnsupportedOperationException()
-    override fun iterator(): MutableIterator<E> = indexList.iterator().mapped({ source[it] }, { indexOf(it) })
+    override fun iterator(): MutableIterator<E> = indexList.iterator().mapping({ source[it] }, { indexOf(it) })
     override fun replace(list: List<E>) = source.replace(list)
 
     val listenerMapper = { input: (E, Int) -> Unit ->
@@ -156,6 +153,27 @@ inline fun <E> ObservableList<E>.sorting(noinline sorter: (E, E) -> Boolean): Ob
     }
 })
 
+inline fun <E> ObservableList<E>.sorting(lifecycle: LifecycleConnectable, noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> {
+    val list = ObservableListSorted(this, { list, item ->
+        if (list.isEmpty())
+            0
+        else {
+            val res = list.indexOfFirst { sorter(item, it) }
+            if (res == -1) list.size else res
+        }
+    })
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
+
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
+}
+
 @Deprecated("This has been renamed to 'sortingWithInsertionIndex' because it sorts on the fly.", ReplaceWith("sortingWithInsertionIndex(getInsertionIndex)", "com.lightningkite.kotlin.observable.list.sortingWithInsertionIndex"))
 inline fun <E> ObservableList<E>.sortedWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
         = ObservableListSorted(this, getInsertionIndex)
@@ -163,15 +181,16 @@ inline fun <E> ObservableList<E>.sortedWithInsertionIndex(noinline getInsertionI
 inline fun <E> ObservableList<E>.sortingWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
         = ObservableListSorted(this, getInsertionIndex)
 
-fun main(args: Array<String>) {
-    //test
-    val unsorted = ObservableListWrapper(mutableListOf(4, 2, 7, 1, 3))
-    val sorted = unsorted.sorted { a, b -> a < b }
-    println(sorted.joinToString())
-    sorted.removeAt(2)
-    println(sorted.joinToString())
-    sorted.add(6)
-    println(sorted.joinToString())
-    println(unsorted.joinToString())
+inline fun <E> ObservableList<E>.sortingWithInsertionIndex(lifecycle: LifecycleConnectable, noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E> {
+    val list = ObservableListSorted(this, getInsertionIndex)
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
 
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
 }

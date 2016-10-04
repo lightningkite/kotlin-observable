@@ -1,6 +1,6 @@
 package com.lightningkite.kotlin.observable.list
 
-import com.lightningkite.kotlin.collection.mapped
+import com.lightningkite.kotlin.collection.mapping
 import com.lightningkite.kotlin.observable.property.mapReadOnly
 
 /**
@@ -28,9 +28,9 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
     override fun set(index: Int, element: E): E = mapper(source.set(index, reverseMapper(element)))
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = source.subList(fromIndex, toIndex).map(mapper).toMutableList()
 
-    override fun listIterator(): MutableListIterator<E> = source.listIterator().mapped(mapper, reverseMapper)
-    override fun listIterator(index: Int): MutableListIterator<E> = source.listIterator(index).mapped(mapper, reverseMapper)
-    override fun iterator(): MutableIterator<E> = source.iterator().mapped(mapper, reverseMapper)
+    override fun listIterator(): MutableListIterator<E> = source.listIterator().mapping(mapper, reverseMapper)
+    override fun listIterator(index: Int): MutableListIterator<E> = source.listIterator(index).mapping(mapper, reverseMapper)
+    override fun iterator(): MutableIterator<E> = source.iterator().mapping(mapper, reverseMapper)
     override fun replace(list: List<E>) = source.replace(list.map(reverseMapper))
 
     val listenerMapper = { input: (E, Int) -> Unit ->
@@ -38,21 +38,21 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
             input(mapper(element), index)
         }
     }
-    override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.mapped(listenerMapper)
-    override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.mapped(listenerMapper)
-    override val onMove: MutableSet<(E, Int, Int) -> Unit> get() = source.onMove.mapped { input: (E, Int, Int) -> Unit ->
+    override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.mapping(listenerMapper)
+    override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.mapping(listenerMapper)
+    override val onMove: MutableSet<(E, Int, Int) -> Unit> get() = source.onMove.mapping { input: (E, Int, Int) -> Unit ->
         { element: S, oldIndex: Int, index: Int ->
             input(mapper(element), oldIndex, index)
         }
     }
-    override val onChange: MutableSet<(E, E, Int) -> Unit> get() = source.onChange.mapped { input: (E, E, Int) -> Unit ->
+    override val onChange: MutableSet<(E, E, Int) -> Unit> get() = source.onChange.mapping { input: (E, E, Int) -> Unit ->
         { old: S, element: S, index: Int ->
             input(mapper(old), mapper(element), index)
         }
     }
 
     override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
-    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapped({ input -> { input(this) } })
+    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapping({ input -> { input(this) } })
 }
 
 @Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper, reverseMapper)", "com.lightningkite.kotlin.observable.list.mapping"))
