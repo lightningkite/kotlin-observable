@@ -32,7 +32,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
 
     fun modifyIndiciesAfter(index: Int, by: Int) {
         for (i in boundaryIndexes.indices) {
-            if (boundaryIndexes[i] > index) {
+            if (boundaryIndexes[i] >= index) {
                 boundaryIndexes[i] += by
             }
         }
@@ -172,6 +172,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         for (i in 0..list.size - 1) {
             onAdd.runAll(list[i], newBoundary + i)
         }
+        onUpdate.runAll(this)
     }
 
     fun onTotalItemRemove(item: S, index: Int) {
@@ -180,6 +181,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         for (i in list.size - 1 downTo 0) {
             onRemove.runAll(list[i], oldBoundary + i)
         }
+        onUpdate.runAll(this)
     }
 
     fun clearOldListeners() {
@@ -239,6 +241,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val fullIndex = getIndex(myIndex to index)
                 modifyIndiciesAfter(fullIndex, 1)
                 onAdd.runAll(item, fullIndex)
+                onUpdate.runAll(this)
             },
             onRemoveListener = { item, index ->
                 val myIndex = source.indexOf(itemContainingList)
@@ -246,18 +249,21 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val fullIndex = getIndex(myIndex to index)
                 modifyIndiciesAfter(fullIndex, -1)
                 onRemove.runAll(item, fullIndex)
+                onUpdate.runAll(this)
             },
             onMoveListener = { item, oldIndex, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 val oldTotalIndex = getIndex(myIndex to oldIndex)
                 val newTotalIndex = getIndex(myIndex to index)
                 onMove.runAll(item, oldTotalIndex, newTotalIndex)
+                onUpdate.runAll(this)
             },
             onChangeListener = { old, item, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
                 onChange.runAll(old, item, fullIndex)
+                onUpdate.runAll(this)
             },
             onReplaceListener = { list ->
                 val myIndex = source.indexOf(itemContainingList)
