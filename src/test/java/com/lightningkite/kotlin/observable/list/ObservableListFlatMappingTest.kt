@@ -198,6 +198,23 @@ class ObservableListFlatMappingTest {
     }
 
     @Test
+    fun addToEmptyCheckTest() {
+        val list = observableListOf(
+                observableListOf('a', 'b', 'c'),
+                observableListOf(),
+                observableListOf('h', 'i', 'j')
+        )
+        val flat = list.flatMapping { it }
+        println(flat.boundaryIndexes)
+        list[1].add('z')
+        println(flat.boundaryIndexes)
+        for (i in 0..flat.size - 1) {
+            println(i)
+            flat[i]
+        }
+    }
+
+    @Test
     fun removeCheckTest() {
         val list = makeTestList()
         val flat = list.flatMapping { it }

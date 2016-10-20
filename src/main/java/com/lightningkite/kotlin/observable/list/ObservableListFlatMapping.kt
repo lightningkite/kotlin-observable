@@ -30,11 +30,9 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         throw IndexOutOfBoundsException()
     }
 
-    fun modifyIndiciesAfter(index: Int, by: Int) {
-        for (i in boundaryIndexes.indices) {
-            if (boundaryIndexes[i] >= index) {
-                boundaryIndexes[i] += by
-            }
+    fun modifyIndiciesAfter(listIndex: Int, by: Int) {
+        for (i in listIndex + 1..boundaryIndexes.lastIndex) {
+            boundaryIndexes[i] += by
         }
     }
 
@@ -239,7 +237,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                modifyIndiciesAfter(fullIndex, 1)
+                modifyIndiciesAfter(myIndex, 1)
                 onAdd.runAll(item, fullIndex)
                 onUpdate.runAll(this)
             },
@@ -247,7 +245,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                modifyIndiciesAfter(fullIndex, -1)
+                modifyIndiciesAfter(myIndex, -1)
                 onRemove.runAll(item, fullIndex)
                 onUpdate.runAll(this)
             },
