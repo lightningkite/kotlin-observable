@@ -97,7 +97,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
     override fun get(index: Int): E = source[indexList[index]] ?: throw IllegalStateException("No source specified.")
     override fun indexOf(element: E): Int = indexList.indexOf(source.indexOf(element))
     override fun lastIndexOf(element: E): Int = indexList.indexOf(source.lastIndexOf(element))
-    override fun isEmpty(): Boolean = source.isEmpty()
+    override fun isEmpty(): Boolean = indexList.isEmpty()
     override fun add(element: E): Boolean = source.add(element)
     override fun add(index: Int, element: E) = source.add(index, element)
     override fun addAll(index: Int, elements: Collection<E>): Boolean = source.addAll(index, elements)

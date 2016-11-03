@@ -3,6 +3,7 @@ package com.lightningkite.kotlin.observable.list
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
+import com.lightningkite.kotlin.runAll
 import java.util.*
 
 /**
@@ -12,77 +13,168 @@ import java.util.*
 class ObservableListGroupingBy<E, G, L>(
         val source: ObservableList<E>,
         val grouper: (E) -> G,
-        val listWrapper: (ObservableListFiltered<E>) -> L,
+        val listWrapper: (ObservableList<E>) -> L,
         val innerList: ObservableListWrapper<Pair<G, L>> = observableListOf()
 ) : ObservableList<Pair<G, L>> by innerList, Disposable {
 
-    val filteringLists = HashMap<L, ObservableListFiltered<E>>()
-    val listener = ObservableListListenerSet<E>(
-            onAddListener = { item, index ->
-                updateLists()
-            },
-            onRemoveListener = { item, index ->
-                updateLists()
-            },
-            onChangeListener = { oldItem, item, index ->
-                updateLists()
-            },
-            onMoveListener = { item, oldIndex, index -> },
-            onReplaceListener = { list ->
-                updateLists()
-            }
-    )
+    private inner class InnerList() : ObservableListIndicies<E>(source) {
+    }
 
-    private fun updateLists() {
-        val newCategories = source.map(grouper).toSet()
-        val oldCategories = innerList.map { it.first }.toSet()
-        for (category in newCategories) {
-            if (category !in oldCategories) {
-                val filtering = source.filtering { grouper(it) == category }
-                val wrapped = listWrapper(filtering)
-                filteringLists[wrapped] = filtering
-                innerList.add(category to wrapped)
-            }
+    private val groups = HashMap<G, InnerList>()
+
+    private fun getOrMakeGroup(group: G): InnerList {
+        val current = groups[group]
+        if (current != null) return current
+
+        val list = InnerList()
+        val wrapper = listWrapper(list)
+        innerList.add(group to wrapper)
+        groups[group] = list
+        return list
+    }
+
+    private fun removeGroup(group: G) {
+        groups.remove(group)
+        val index = innerList.indexOfFirst { it.first == group }
+        if (index != -1) {
+            innerList.removeAt(index)
         }
-        for (category in oldCategories) {
-            if (category !in newCategories) {
-                innerList.removeAll {
-                    if (it.first == category) {
-                        val toDispose = filteringLists.remove(it.second)
-                        toDispose?.dispose()
-                        true
-                    } else false
-                }
+    }
+
+    private fun reset() {
+        innerList.clear()
+        groups.clear()
+
+        val myGroups = HashMap<G, InnerList>()
+        for (index in source.indices) {
+            val item = source[index]
+            val group = grouper(item)
+            val current = getOrMakeGroup(group)
+            current.indexList.add(index)
+            current.onAdd.runAll(item, current.indexList.size - 1)
+        }
+    }
+
+    fun modifyIndicesBy(after: Int, by: Int) {
+        for ((group, inner) in groups) {
+            for (indexIndex in inner.indexList.indices) {
+                val index = inner.indexList[indexIndex]
+                if (index >= after)
+                    inner.indexList[indexIndex] = index + by
             }
         }
     }
+
+    fun getCurrentIndexGroup(index: Int): G {
+        for ((group, list) in groups) {
+            if (list.indexList.contains(index)) {
+                return group
+            }
+        }
+        throw IllegalStateException()
+    }
+
+    val listener = ObservableListListenerSet<E>(
+            onAddListener = { item, index ->
+                modifyIndicesBy(index, 1)
+                val group = grouper(item)
+                val list = getOrMakeGroup(group)
+                list.indexList.add(index)
+                list.onAdd.runAll(item, list.indexList.size - 1)
+            },
+            onRemoveListener = { item, index ->
+                val group = getCurrentIndexGroup(index)
+                val groupList = groups[group]
+                if (groupList != null) {
+                    val indexIndex = groupList.indexList.indexOf(index)
+                    groupList.indexList.removeAt(indexIndex)
+                    modifyIndicesBy(index, -1)
+                    groupList.onRemove.runAll(item, indexIndex)
+                    if (groupList.isEmpty()) {
+                        removeGroup(group)
+                    }
+                } else throw IllegalArgumentException()
+            },
+            onChangeListener = { oldItem, item, index ->
+                val oldGroup = getCurrentIndexGroup(index)
+                val newGroup = grouper(item)
+                if (oldGroup == newGroup) {
+                    val groupList = groups[oldGroup]
+                    if (groupList != null) {
+                        val indexIndex = groupList.indexList.indexOf(index)
+                        groupList.onChange.runAll(oldItem, item, indexIndex)
+                    } else throw IllegalArgumentException()
+                } else {
+                    val oldGroupList = groups[oldGroup] ?: throw IllegalArgumentException()
+                    val oldIndexIndex = oldGroupList.indexList.indexOf(index)
+                    oldGroupList.indexList.removeAt(oldIndexIndex)
+                    oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
+                    if (oldGroupList.isEmpty()) {
+                        removeGroup(oldGroup)
+                    }
+
+                    val newGroupList = getOrMakeGroup(newGroup)
+                    newGroupList.indexList.add(index)
+                    newGroupList.onAdd.runAll(item, newGroupList.indexList.size - 1)
+                }
+            },
+            onMoveListener = { item, oldIndex, index ->
+                val group = getCurrentIndexGroup(oldIndex)
+                val groupList = groups[group]
+                if (groupList != null) {
+                    val indexIndex = groupList.indexList.indexOf(oldIndex)
+                    modifyIndicesBy(oldIndex, -1)
+                    modifyIndicesBy(index, 1)
+                    groupList.indexList[indexIndex] = index
+                } else throw IllegalArgumentException()
+            },
+            onReplaceListener = { list ->
+                reset()
+            }
+    )
+//
+//    private fun updateLists() {
+//        val newCategories = source.map(grouper).toSet()
+//        val oldCategories = innerList.map { it.first }.toSet()
+//        for (category in newCategories) {
+//            if (category !in oldCategories) {
+//                val filtering = InnerList()
+//                val wrapped = listWrapper(filtering)
+//                innerLists[wrapped] = filtering
+//                innerList.add(category to wrapped)
+//            }
+//        }
+//        for (category in oldCategories) {
+//            if (category !in newCategories) {
+//                innerList.removeAll() { it.first == category }
+//            }
+//        }
+//    }
 
     init {
         setup()
     }
 
     fun setup() {
-        updateLists()
+        reset()
+        source.addListenerSet(listener)
     }
 
     override fun dispose() {
-        for (item in innerList) {
-            val toDispose = filteringLists.remove(item.second)
-            toDispose?.dispose()
-        }
+        source.removeListenerSet(listener)
         innerList.clear()
     }
 }
 
 fun <E, G, L> ObservableList<E>.groupingBy(
         grouper: (E) -> G,
-        listWrapper: (ObservableListFiltered<E>) -> L
+        listWrapper: (ObservableList<E>) -> L
 ) = ObservableListGroupingBy(this, grouper, listWrapper)
 
 fun <E, G, L> ObservableList<E>.groupingBy(
         lifecycle: LifecycleConnectable,
         grouper: (E) -> G,
-        listWrapper: (ObservableListFiltered<E>) -> L
+        listWrapper: (ObservableList<E>) -> L
 ): ObservableListGroupingBy<E, G, L> {
     val list = ObservableListGroupingBy(this, grouper, listWrapper)
     lifecycle.connect(object : LifecycleListener {
