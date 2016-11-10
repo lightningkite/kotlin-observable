@@ -1,6 +1,6 @@
 # kotlin-observable
 
-This package is not Android-specific, and can be used across platforms.
+This package is not Android-specific, and can be used across platforms.  However, for a good example of use in Android, take a look at [kotlin-components-starter](https://github.com/UnknownJoe796/kotlin-components-starter).
 
 This package contains two major things: `ObservableProperty<T>` and `ObservableList<T>`.
 Both are used primarily to connect user interfaces to data seamlessly and worry-free, much like you can use Rx.
