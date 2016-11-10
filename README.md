@@ -32,7 +32,8 @@ class Test{
   var message by messageObservable
 
   fun test(){
-    println(message) //you can access the value at any time
+    println(messageObservable.value) //you can access the value at any time
+    println(message) //equivalent to the above
 
     //The code below is adding a new listener to the observable.  This listener will be called whenever the observable changes.
     messageObservable += { newMessage ->
@@ -45,6 +46,35 @@ class Test{
   }
 }
 ```
+
+### Types of ObservableProperty<T>
+
+You will probably only ever create `StandardObservableProperty` directly.  The others are for rare scenarios or are better created using extension functions on other observable properties.
+
+- MutableObservableProperty - An observable property that is mutable.
+- StandardObservableProperty - A standard implementation of an observable property.
+- LateInitObservableProperty - An observable property that doesn't have to be set in the constructor, but is non-null.
+- ObservablePropertyReference - Wraps an already existing variable as an observable property.  The lambdas will only be called if the variable is set through this object.
+
+### Useful transformations
+
+`observable.sub(lifecycle, {item -> item.childObservable })`
+
+Creates an observable that changes whenever the item in the parent observable changes OR the child observable changes.
+
+`observable.subOpt(lifecycle, {item -> item?.childObservable })`
+
+Creates an observable that changes whenever the item in the parent observable changes OR the child observable changes.
+For this one, the item can be null and the child observable can be null.
+
+`observable.mapObservable<S,T>({s:S -> s.t}, {t:T -> t.s})`
+
+Maps an observable.
+
+`observable.mapReadOnly{ convert(it) }`
+
+Maps an observable, but the resulting observable is read only.
+
       
 ## ObservableList<T>
 
@@ -73,3 +103,33 @@ myList.add(4)
 //The list was changed!
 //The item 4 was added at index 3
 ```
+
+### Useful transformations
+
+#### No disposal needed
+
+`list.mapping{ item -> /*transformation*/ }`
+
+Creates an observable list that wraps another observable list, passing on the events and always reflecting the original list, but with some transformation applied to each item as it comes through.  The result is non-mutable, however, if you pass in a reverse-mapping lambda, it can be.
+
+#### Disposal needed to disconnect listeners
+
+These transformations require that the resulting wrapper be `dispose`d to disconnect listeners to the original list.  If the original list will be disposed of anyways, however, it doesn't matter.  This means that only the first transformation of these needs to be disposed.
+
+The easiest way to mark one of these for disposal is to attach it to a lifecycle.  Most of these transformations have an optional first argument which takes a lifecycle.
+
+`list.sorting{a, b -> a lessThan b}`
+
+Creates a wrapper around the observable list that is always sorted according to the algorithm given.  It is mutable, but there is no guarentee where the items you add will end up.
+
+`list.filtering{ item -> item.shouldPass() }`
+
+Creates a wrapper around the observable list that filters out undesired elements.  The filter is mutable within the created wrapper.
+
+`list.groupingBy{ item -> item.propertyToGroupBy }`
+
+Creates an observable list of observable lists of items grouped by a certain algorithm, which reflects changes in the original list.
+
+`listOfLists.flatMapping{ item -> item.observableList }`
+
+Creates one large observable list from a list of lists of items, which reflects changes in the both the parent list and the child lists.
