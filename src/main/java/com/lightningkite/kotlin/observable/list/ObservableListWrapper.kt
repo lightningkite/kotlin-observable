@@ -13,14 +13,16 @@ class ObservableListWrapper<E>(
 ) : ObservableList<E> {
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
-    override val onChange = HashSet<(E, Int) -> Unit>()
+    override val onChange = HashSet<(E, E, Int) -> Unit>()
+    override val onMove = HashSet<(E, Int, Int) -> Unit>()
     override val onUpdate = ObservablePropertyReference<ObservableList<E>>({ this@ObservableListWrapper }, { replace(it) })
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()
 
     override fun set(index: Int, element: E): E {
+        val old = collection[index]
         collection[index] = element
-        onChange.runAll(element, index)
+        onChange.runAll(old, element, index)
         onUpdate.runAll(this)
         return element
     }
@@ -139,6 +141,12 @@ class ObservableListWrapper<E>(
         collection.addAll(list)
         onReplace.runAll(this)
         onUpdate.runAll(this)
+    }
+
+    override fun move(fromIndex: Int, toIndex: Int) {
+        val item = collection.removeAt(fromIndex)
+        collection.add(toIndex, item)
+        onMove.runAll(item, fromIndex, toIndex)
     }
 }
 

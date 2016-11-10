@@ -1,6 +1,8 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
+import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.runAll
 import java.util.*
@@ -28,11 +30,9 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         throw IndexOutOfBoundsException()
     }
 
-    fun modifyIndiciesAfter(index: Int, by: Int) {
-        for (i in boundaryIndexes.indices) {
-            if (boundaryIndexes[i] > index) {
-                boundaryIndexes[i] += by
-            }
+    fun modifyIndiciesAfter(listIndex: Int, by: Int) {
+        for (i in listIndex + 1..boundaryIndexes.lastIndex) {
+            boundaryIndexes[i] += by
         }
     }
 
@@ -85,6 +85,14 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
     override fun add(index: Int, element: E) {
         val i = getIndicies(index)
         source[i.first].let(mapper).add(i.second, element)
+    }
+
+    override fun move(fromIndex: Int, toIndex: Int) {
+        val from = getIndicies(fromIndex)
+        val to = getIndicies(if (toIndex > fromIndex) toIndex - 1 else toIndex)
+        //TODO: Add/remove?
+        if (from.first != to.first) throw UnsupportedOperationException("You can't move an item between lists.")
+        source[from.first].let(mapper).move(from.second, to.second)
     }
 
     override fun addAll(elements: Collection<E>): Boolean {
@@ -150,17 +158,19 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
 
 
     override val onAdd = HashSet<(E, Int) -> Unit>()
-    override val onChange = HashSet<(E, Int) -> Unit>()
+    override val onChange = HashSet<(E, E, Int) -> Unit>()
+    override val onMove = HashSet<(E, Int, Int) -> Unit>()
     override val onUpdate = ObservablePropertyReference<ObservableList<E>>({ this@ObservableListFlatMapping }, { throw IllegalAccessException() })
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()
 
     fun onTotalItemAdd(item: S, index: Int) {
-        val size = item.let(mapper).size
-        val newBoundary = insertBoundaryIndex(index, size)
-        for (i in 0..size - 1) {
-            onAdd.runAll(item.let(mapper)[i], newBoundary + i)
+        val list = item.let(mapper)
+        val newBoundary = insertBoundaryIndex(index, list.size)
+        for (i in 0..list.size - 1) {
+            onAdd.runAll(list[i], newBoundary + i)
         }
+        onUpdate.runAll(this)
     }
 
     fun onTotalItemRemove(item: S, index: Int) {
@@ -169,6 +179,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         for (i in list.size - 1 downTo 0) {
             onRemove.runAll(list[i], oldBoundary + i)
         }
+        onUpdate.runAll(this)
     }
 
     fun clearOldListeners() {
@@ -206,8 +217,14 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                     list.removeListenerSet(set)
                 }
             },
-            onChangeListener = { item, index ->
-                onTotalItemRemove(item, index)
+            onMoveListener = { item, oldIndex, index ->
+                //TODO could move each item
+                onTotalItemRemove(item, oldIndex)
+                onTotalItemAdd(item, index)
+            },
+            onChangeListener = { old, item, index ->
+                //TODO could change ones that are there then remove/add until fully used
+                onTotalItemRemove(old, index)
                 onTotalItemAdd(item, index)
             },
             onReplaceListener = { list ->
@@ -220,21 +237,31 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                modifyIndiciesAfter(fullIndex, 1)
+                modifyIndiciesAfter(myIndex, 1)
                 onAdd.runAll(item, fullIndex)
+                onUpdate.runAll(this)
             },
             onRemoveListener = { item, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                modifyIndiciesAfter(fullIndex, -1)
+                modifyIndiciesAfter(myIndex, -1)
                 onRemove.runAll(item, fullIndex)
+                onUpdate.runAll(this)
             },
-            onChangeListener = { item, index ->
+            onMoveListener = { item, oldIndex, index ->
+                val myIndex = source.indexOf(itemContainingList)
+                val oldTotalIndex = getIndex(myIndex to oldIndex)
+                val newTotalIndex = getIndex(myIndex to index)
+                onMove.runAll(item, oldTotalIndex, newTotalIndex)
+                onUpdate.runAll(this)
+            },
+            onChangeListener = { old, item, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
-                onChange.runAll(item, fullIndex)
+                onChange.runAll(old, item, fullIndex)
+                onUpdate.runAll(this)
             },
             onReplaceListener = { list ->
                 val myIndex = source.indexOf(itemContainingList)
@@ -244,34 +271,38 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
             }
     )
 
-    init {
+    var connected = false
+    fun setup() {
+        if (connected) return
         reset()
+        source.addListenerSet(overallListenerSet)
+        connected = true
+    }
+
+    init {
+        setup()
     }
 
     override fun dispose() {
+        if (!connected) return
+        source.removeListenerSet(overallListenerSet)
         clearOldListeners()
+        connected = false
     }
 }
-
 fun <S, E> ObservableList<S>.flatMapping(mapper: (S) -> ObservableList<E>): ObservableListFlatMapping<S, E>
         = ObservableListFlatMapping(this, mapper)
 
-fun main(vararg inputs: String) {
-    val items = observableListOf(
-            observableListOf(1, 2, 3),
-            observableListOf(4, 5, 6),
-            observableListOf(7, 8, 9)
-    )
-    val flatMapped = items.flatMapping { it }
-    flatMapped.addListenerSet(ObservableListListenerSet(
-            onAddListener = { item, index -> println("Add $item at $index") },
-            onRemoveListener = { item, index -> println("Remove $item at $index") },
-            onChangeListener = { item, index -> println("Change $item at $index") },
-            onReplaceListener = { newList -> println("Replaced $newList") }
-    ))
+inline fun <S, E> ObservableList<S>.flatMapping(lifecycle: LifecycleConnectable, noinline mapper: (S) -> ObservableList<E>): ObservableListFlatMapping<S, E> {
+    val list = ObservableListFlatMapping(this, mapper)
+    lifecycle.connect(object : LifecycleListener {
+        override fun onStart() {
+            list.setup()
+        }
 
-    println(flatMapped.joinToString())
-
-    items[1].removeAt(1)
-    println(flatMapped.joinToString())
+        override fun onStop() {
+            list.dispose()
+        }
+    })
+    return list
 }
