@@ -40,6 +40,8 @@ class Test{
     }
 
     message = "This is a new message." //should print "Message has changed to: This is a new message"
+    
+    messageObservable.value = "Other message" //should print "Message has been changed to: Other message"
   }
 }
 ```
