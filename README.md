@@ -3,7 +3,7 @@
 This package is not Android-specific, and can be used across platforms.  However, for a good example of use in Android, take a look at [kotlin-components-starter](https://github.com/UnknownJoe796/kotlin-components-starter).
 
 This package contains two major things: `ObservableProperty<T>` and `ObservableList<T>`.
-Both are used primarily to connect user interfaces to data seamlessly and worry-free, much like you can use Rx.
+Both are used primarily to connect organization interfaces to data seamlessly and worry-free, much like you can use Rx.
 This library, however, is meant to be as basic and simple as possible while still implementing some useful features.
 
 ## Overall Philosophy
@@ -12,7 +12,7 @@ This library, however, is meant to be as basic and simple as possible while stil
 extension function to reduce the app's method count.
 
 *Intuitiveness:*  Use inline extension functions to make common tasks simple, such as requesting a 
-photo from the user.  In standard Android, doing this properly would take at least a large file by 
+photo from the organization.  In standard Android, doing this properly would take at least a large file by
 itself.  We have extension functions that do it in one line.
 
 ## ObservableProperty<T>
