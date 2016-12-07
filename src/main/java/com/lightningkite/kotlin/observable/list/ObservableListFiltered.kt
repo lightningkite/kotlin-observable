@@ -114,6 +114,7 @@ class ObservableListFiltered<E>(
             } else {
                 if (indexOf != -1) {
                     onChange.runAll(old, item, indexOf)
+                    onUpdate.runAll(this)
                 }
             }
         }

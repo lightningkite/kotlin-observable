@@ -52,6 +52,7 @@ class ObservableListGroupingBy<E, G, L>(
             val current = getOrMakeGroup(group)
             current.indexList.add(index)
             current.onAdd.runAll(item, current.indexList.size - 1)
+            current.onUpdate.runAll(current)
         }
     }
 
@@ -81,6 +82,7 @@ class ObservableListGroupingBy<E, G, L>(
                 val list = getOrMakeGroup(group)
                 list.indexList.add(index)
                 list.onAdd.runAll(item, list.indexList.size - 1)
+                list.onUpdate.runAll(list)
             },
             onRemoveListener = { item, index ->
                 val group = getCurrentIndexGroup(index)
@@ -90,6 +92,7 @@ class ObservableListGroupingBy<E, G, L>(
                     groupList.indexList.removeAt(indexIndex)
                     modifyIndicesBy(index, -1)
                     groupList.onRemove.runAll(item, indexIndex)
+                    groupList.onUpdate.runAll(groupList)
                     if (groupList.isEmpty()) {
                         removeGroup(group)
                     }
@@ -103,12 +106,14 @@ class ObservableListGroupingBy<E, G, L>(
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(index)
                         groupList.onChange.runAll(oldItem, item, indexIndex)
+                        groupList.onUpdate.runAll(groupList)
                     } else throw IllegalArgumentException()
                 } else {
                     val oldGroupList = groups[oldGroup] ?: throw IllegalArgumentException()
                     val oldIndexIndex = oldGroupList.indexList.indexOf(index)
                     oldGroupList.indexList.removeAt(oldIndexIndex)
                     oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
+                    oldGroupList.onUpdate.runAll(oldGroupList)
                     if (oldGroupList.isEmpty()) {
                         removeGroup(oldGroup)
                     }
@@ -116,6 +121,7 @@ class ObservableListGroupingBy<E, G, L>(
                     val newGroupList = getOrMakeGroup(newGroup)
                     newGroupList.indexList.add(index)
                     newGroupList.onAdd.runAll(item, newGroupList.indexList.size - 1)
+                    newGroupList.onUpdate.runAll(newGroupList)
                 }
             },
             onMoveListener = { item, oldIndex, index ->

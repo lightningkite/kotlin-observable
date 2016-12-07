@@ -29,6 +29,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
                 val sortedIndex = indexGetInsertionIndex(item)
                 indexList.add(sortedIndex, index)
                 onAdd.runAll(item, sortedIndex)
+                onUpdate.runAll(this)
             },
             onRemoveListener = { item, index ->
                 val sortedIndex = indexList.indexOf(index)
@@ -39,6 +40,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
                             indexList[i]--
                     }
                     onRemove.runAll(item, sortedIndex)
+                    onUpdate.runAll(this)
                 }
             },
             onMoveListener = { item, oldIndex, index ->
@@ -53,9 +55,11 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
                     onRemove.runAll(old, removeSortedIndex)
                     indexList.add(sortedIndex, index)
                     onAdd.runAll(item, sortedIndex)
+                    onUpdate.runAll(this)
                 } else {
                     indexList.add(sortedIndex, index)
                     onChange.runAll(old, item, removeSortedIndex)
+                    onUpdate.runAll(this)
                 }
             },
             onReplaceListener = {
@@ -65,6 +69,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
                     indexList.add(sortedIndex, index)
                 }
                 onReplace.runAll(this)
+                onUpdate.runAll(this)
             }
     )
 
