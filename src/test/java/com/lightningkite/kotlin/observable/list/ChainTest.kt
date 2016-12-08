@@ -23,7 +23,7 @@ class ChainTest {
     }
 
     @Test
-    fun updateTest() {
+    fun onChangeTest() {
         makeTestDatas().forEach {
             for (i in it.first.indices) {
                 val startElement = it.first[i]
@@ -34,6 +34,30 @@ class ChainTest {
                 it.second.onChange += callback
                 it.first.updateAt(i)
                 it.second.onChange -= callback
+            }
+        }
+    }
+
+    @Test
+    fun onUpdateAfterChangeTest() {
+        makeTestDatas().forEach {
+            for (i in it.first.indices) {
+                val startElement = it.first[i]
+                var uncalledOrBoth = true
+                val callback = { old: Char, new: Char, index: Int ->
+                    assertEquals(startElement, old)
+                    assertEquals(it.second.indexOf(startElement), index)
+                    uncalledOrBoth = false
+                }
+                val onUpdateCallback = { list: List<Char> ->
+                    uncalledOrBoth = true
+                }
+                it.second.onUpdate += onUpdateCallback
+                it.second.onChange += callback
+                it.first.updateAt(i)
+                it.second.onChange -= callback
+                it.second.onUpdate -= onUpdateCallback
+                assert(uncalledOrBoth)
             }
         }
     }
