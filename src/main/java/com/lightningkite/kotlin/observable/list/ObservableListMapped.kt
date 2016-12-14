@@ -1,6 +1,7 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.collection.mapping
+import com.lightningkite.kotlin.collection.mappingWriteOnly
 import com.lightningkite.kotlin.observable.property.mapReadOnly
 
 /**
@@ -38,21 +39,21 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
             input(mapper(element), index)
         }
     }
-    override val onAdd: MutableSet<(E, Int) -> Unit> get() = source.onAdd.mapping(listenerMapper)
-    override val onRemove: MutableSet<(E, Int) -> Unit> get() = source.onRemove.mapping(listenerMapper)
-    override val onMove: MutableSet<(E, Int, Int) -> Unit> get() = source.onMove.mapping { input: (E, Int, Int) -> Unit ->
+    override val onAdd: MutableCollection<(E, Int) -> Unit> = source.onAdd.mappingWriteOnly(listenerMapper)
+    override val onRemove: MutableCollection<(E, Int) -> Unit> = source.onRemove.mappingWriteOnly(listenerMapper)
+    override val onMove: MutableCollection<(E, Int, Int) -> Unit> = source.onMove.mappingWriteOnly { input: (E, Int, Int) -> Unit ->
         { element: S, oldIndex: Int, index: Int ->
             input(mapper(element), oldIndex, index)
         }
     }
-    override val onChange: MutableSet<(E, E, Int) -> Unit> get() = source.onChange.mapping { input: (E, E, Int) -> Unit ->
+    override val onChange: MutableCollection<(E, E, Int) -> Unit> = source.onChange.mappingWriteOnly { input: (E, E, Int) -> Unit ->
         { old: S, element: S, index: Int ->
             input(mapper(old), mapper(element), index)
         }
     }
 
     override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
-    override val onReplace: MutableSet<(ObservableList<E>) -> Unit> get() = source.onReplace.mapping({ input -> { input(this) } })
+    override val onReplace: MutableCollection<(ObservableList<E>) -> Unit> = source.onReplace.mappingWriteOnly({ input -> { input(this) } })
 }
 
 @Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper, reverseMapper)", "com.lightningkite.kotlin.observable.list.mapping"))

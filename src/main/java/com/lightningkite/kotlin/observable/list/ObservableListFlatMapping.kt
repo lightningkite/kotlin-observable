@@ -177,6 +177,12 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         val list = item.let(mapper)
         val oldBoundary = removeBoundaryIndex(index, item)
         for (i in list.size - 1 downTo 0) {
+            if (try {
+                list[list.size - 1]; true
+            } catch(e: Exception) {
+                false
+            })
+                println("Get error at $i")
             onRemove.runAll(list[i], oldBoundary + i)
         }
         onUpdate.runAll(this)

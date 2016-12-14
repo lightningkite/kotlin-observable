@@ -57,17 +57,31 @@ class ObservableListMultiGroupingBy<E, G, L>(
         }
     }
 
-    fun modifyIndicesBy(after: Int, by: Int) {
+    private fun modifyIndicesBy(after: Int, by: Int) {
         for ((group, inner) in groupLists) {
             for (indexIndex in inner.indexList.indices) {
                 val index = inner.indexList[indexIndex]
-                if (index >= after)
+                if (index >= after) {
                     inner.indexList[indexIndex] = index + by
+                }
             }
         }
     }
 
-    fun getCurrentIndexGroup(index: Int): Collection<G> {
+    private fun modifyIndicesBy(after: Int, by: Int, setToIfEqual: Int) {
+        for ((group, inner) in groupLists) {
+            for (indexIndex in inner.indexList.indices) {
+                val index = inner.indexList[indexIndex]
+                if (index > after) {
+                    inner.indexList[indexIndex] = index + by
+                } else if (index == after) {
+                    inner.indexList[indexIndex] = setToIfEqual
+                }
+            }
+        }
+    }
+
+    private fun getCurrentIndexGroup(index: Int): Collection<G> {
         val result = ArrayList<G>()
         for ((group, list) in groupLists) {
             if (list.indexList.contains(index)) {
@@ -75,6 +89,30 @@ class ObservableListMultiGroupingBy<E, G, L>(
             }
         }
         return result
+    }
+
+    inner private class QueuedOnRemoveCall(val groupList: InnerList, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnRemoveCall> {
+        override fun compareTo(other: QueuedOnRemoveCall): Int = index.compareTo(other.index)
+        override fun invoke() {
+            groupList.onRemove.runAll(element, index)
+            groupList.onUpdate.runAll(groupList)
+        }
+    }
+
+    inner private class QueuedOnAddCall(val groupList: InnerList, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnAddCall> {
+        override fun compareTo(other: QueuedOnAddCall): Int = index.compareTo(other.index)
+        override fun invoke() {
+            groupList.onAdd.runAll(element, index)
+            groupList.onUpdate.runAll(groupList)
+        }
+    }
+
+    inner private class QueuedOnChangeCall(val groupList: InnerList, val oldElement: E, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnChangeCall> {
+        override fun compareTo(other: QueuedOnChangeCall): Int = index.compareTo(other.index)
+        override fun invoke() {
+            groupList.onChange.runAll(oldElement, element, index)
+            groupList.onUpdate.runAll(groupList)
+        }
     }
 
     val listener = ObservableListListenerSet<E>(
@@ -89,13 +127,16 @@ class ObservableListMultiGroupingBy<E, G, L>(
                 }
             },
             onRemoveListener = { item, index ->
+                val onRemoveCalls = PriorityQueue<QueuedOnRemoveCall>()
                 val groups = getCurrentIndexGroup(index)
+
+                modifyIndicesBy(index, -1, Int.MIN_VALUE)
+
                 for (group in groups) {
                     val groupList = groupLists[group]
                     if (groupList != null) {
-                        val indexIndex = groupList.indexList.indexOf(index)
+                        val indexIndex = groupList.indexList.indexOf(Int.MIN_VALUE)
                         groupList.indexList.removeAt(indexIndex)
-                        modifyIndicesBy(index, -1)
                         groupList.onRemove.runAll(item, indexIndex)
                         groupList.onUpdate.runAll(groupList)
                         if (groupList.isEmpty()) {
@@ -109,7 +150,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                 val newGroups = grouper(item).toSet()
                 val addingGroups = newGroups.minus(oldGroups)
                 val removingGroups = oldGroups.minus(newGroups)
-                val sameGroups = newGroups.union(oldGroups)
+                val sameGroups = newGroups.intersect(oldGroups)
                 for (group in sameGroups) {
                     val groupList = groupLists[group]
                     if (groupList != null) {

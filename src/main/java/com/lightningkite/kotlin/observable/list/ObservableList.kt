@@ -8,12 +8,12 @@ import com.lightningkite.kotlin.observable.property.ObservableProperty
  */
 interface ObservableList<E> : MutableList<E> {
 
-    val onAdd: MutableSet<(E, Int) -> Unit>
-    val onChange: MutableSet<(E, E, Int) -> Unit>
-    val onMove: MutableSet<(E, Int, Int) -> Unit>
+    val onAdd: MutableCollection<(E, Int) -> Unit>
+    val onChange: MutableCollection<(E, E, Int) -> Unit>
+    val onMove: MutableCollection<(E, Int, Int) -> Unit>
     val onUpdate: ObservableProperty<ObservableList<E>>
-    val onReplace: MutableSet<(ObservableList<E>) -> Unit>
-    val onRemove: MutableSet<(E, Int) -> Unit>
+    val onReplace: MutableCollection<(ObservableList<E>) -> Unit>
+    val onRemove: MutableCollection<(E, Int) -> Unit>
 
     fun move(fromIndex: Int, toIndex: Int)
     fun replace(list: List<E>)
