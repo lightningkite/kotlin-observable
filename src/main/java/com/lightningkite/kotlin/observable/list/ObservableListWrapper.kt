@@ -45,8 +45,8 @@ class ObservableListWrapper<E>(
 
     override fun addAll(elements: Collection<E>): Boolean {
         var index = collection.size
-        collection.addAll(elements)
         for (e in elements) {
+            collection.add(e)
             onAdd.runAll(e, index)
             index++
         }
@@ -55,9 +55,9 @@ class ObservableListWrapper<E>(
     }
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        collection.addAll(elements)
         var currentIndex = index
         for (e in elements) {
+            collection.add(currentIndex, e)
             onAdd.runAll(e, currentIndex)
             currentIndex++
         }
