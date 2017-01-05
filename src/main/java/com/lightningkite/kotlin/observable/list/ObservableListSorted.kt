@@ -3,7 +3,6 @@ package com.lightningkite.kotlin.observable.list
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.mapping
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
-import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservableProperty
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.runAll
@@ -12,15 +11,19 @@ import java.util.*
 /**
  * Created by jivie on 5/23/16.
  */
-class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionIndex: (List<E>, E) -> Int) : ObservableList<E>, Disposable {
+class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) -> Boolean) : ObservableList<E>, Disposable {
 
     val indexList = ArrayList<Int>()
-    val indexListMapped = indexList.mapping<Int, E>(
-            { it: Int -> source[it] },
-            { it: E -> indexList.indexOf(source.indexOf(it)) }
-    )
 
-    fun indexGetInsertionIndex(item: E) = getInsertionIndex(indexListMapped, item)
+    fun indexGetInsertionIndex(item: E): Int {
+        for (indexIndex in indexList.indices) {
+            val other = source[indexList[indexIndex]]
+            if (sorter(item, other)) {
+                return indexIndex
+            }
+        }
+        return indexList.size
+    }
     var listenerSet: ObservableListListenerSet<E> = ObservableListListenerSet(
             onAddListener = { item, index ->
                 for (i in indexList.indices) {
@@ -150,53 +153,9 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val getInsertionInd
 inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> = sorting(sorter)
 
 inline fun <E> ObservableList<E>.sorting(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E>
-        = ObservableListSorted(this, { list, item ->
-    if (list.isEmpty())
-        0
-    else {
-        val res = list.indexOfFirst { sorter(item, it) }
-        if (res == -1) list.size else res
-    }
-})
+        = ObservableListSorted(this, sorter)
 
 inline fun <E> ObservableList<E>.sorting(lifecycle: LifecycleConnectable, noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> {
-    val list = ObservableListSorted(this, { list, item ->
-        if (list.isEmpty())
-            0
-        else {
-            val res = list.indexOfFirst { sorter(item, it) }
-            if (res == -1) list.size else res
-        }
-    })
-    lifecycle.connect(object : LifecycleListener {
-        override fun onStart() {
-            list.setup()
-        }
-
-        override fun onStop() {
-            list.dispose()
-        }
-    })
-    return list
-}
-
-@Deprecated("This has been renamed to 'sortingWithInsertionIndex' because it sorts on the fly.", ReplaceWith("sortingWithInsertionIndex(getInsertionIndex)", "com.lightningkite.kotlin.observable.list.sortingWithInsertionIndex"))
-inline fun <E> ObservableList<E>.sortedWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
-        = ObservableListSorted(this, getInsertionIndex)
-
-inline fun <E> ObservableList<E>.sortingWithInsertionIndex(noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E>
-        = ObservableListSorted(this, getInsertionIndex)
-
-inline fun <E> ObservableList<E>.sortingWithInsertionIndex(lifecycle: LifecycleConnectable, noinline getInsertionIndex: (List<E>, E) -> Int): ObservableListSorted<E> {
-    val list = ObservableListSorted(this, getInsertionIndex)
-    lifecycle.connect(object : LifecycleListener {
-        override fun onStart() {
-            list.setup()
-        }
-
-        override fun onStop() {
-            list.dispose()
-        }
-    })
+    val list = ObservableListSorted(this, sorter)
     return list
 }

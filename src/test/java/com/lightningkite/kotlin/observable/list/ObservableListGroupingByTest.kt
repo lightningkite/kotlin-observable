@@ -80,6 +80,27 @@ class ObservableListGroupingByTest {
     }
 
     @Test
+    fun newGroupHasNew() {
+        val new = "e1"
+        var callbackOccurred = false
+        val (core, grouped, flattened) = makeSortingTestLists()
+        grouped.onAdd += { list, index ->
+            println(index)
+            assert(list.second.contains(new))
+            callbackOccurred = true
+        }
+        println("core: " + core.joinToString())
+        println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
+        println("flattened: " + flattened.joinToString())
+        core.add(new)
+        println("core: " + core.joinToString())
+        println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
+        println("flattened: " + flattened.joinToString())
+
+        assert(callbackOccurred, { "callback didn't occur" })
+    }
+
+    @Test
     fun addNewGroup1() {
         var callbackOccurred = false
         val (core, grouped, flattened) = makeSortingTestLists()
@@ -142,7 +163,7 @@ class ObservableListGroupingByTest {
         var callbackOccurred = false
         grouped[0].second.onChange += { oldItem, item, index ->
             println("index $index, item $oldItem -> $item")
-            //assertEquals(item, "a4")
+            assertEquals(item, "a4")
             callbackOccurred = true
         }
 

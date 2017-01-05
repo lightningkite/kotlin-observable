@@ -17,16 +17,17 @@ class ObservableListGroupingBy<E, G, L>(
         val innerList: ObservableListWrapper<Pair<G, L>> = observableListOf()
 ) : ObservableList<Pair<G, L>> by innerList, Disposable {
 
-    private inner class InnerList() : ObservableListIndicies<E>(source) {
-    }
+    private inner class InnerList() : ObservableListIndicies<E>(source)
 
     private val groups = HashMap<G, InnerList>()
 
-    private fun getOrMakeGroup(group: G): InnerList {
-        val current = groups[group]
-        if (current != null) return current
+    private fun getOrMakeGroup(group: G): InnerList = getOrMakeGroup(group, {})
 
-        val list = InnerList()
+    private inline fun getOrMakeGroup(group: G, crossinline modify: (InnerList) -> Unit): InnerList {
+        val current = groups[group]
+        if (current != null) return current.apply(modify)
+
+        val list = InnerList().apply(modify)
         val wrapper = listWrapper(list)
         innerList.add(group to wrapper)
         groups[group] = list
@@ -45,14 +46,14 @@ class ObservableListGroupingBy<E, G, L>(
         innerList.clear()
         groups.clear()
 
-        val myGroups = HashMap<G, InnerList>()
         for (index in source.indices) {
             val item = source[index]
             val group = grouper(item)
-            val current = getOrMakeGroup(group)
-            current.indexList.add(index)
-            current.onAdd.runAll(item, current.indexList.size - 1)
-            current.onUpdate.runAll(current)
+            getOrMakeGroup(group) {
+                it.indexList.add(index)
+                it.onAdd.runAll(item, it.indexList.size - 1)
+                it.onUpdate.runAll(it)
+            }
         }
     }
 
@@ -79,10 +80,11 @@ class ObservableListGroupingBy<E, G, L>(
             onAddListener = { item, index ->
                 modifyIndicesBy(index, 1)
                 val group = grouper(item)
-                val list = getOrMakeGroup(group)
-                list.indexList.add(index)
-                list.onAdd.runAll(item, list.indexList.size - 1)
-                list.onUpdate.runAll(list)
+                getOrMakeGroup(group) {
+                    it.indexList.add(index)
+                    it.onAdd.runAll(item, it.indexList.size - 1)
+                    it.onUpdate.runAll(it)
+                }
             },
             onRemoveListener = { item, index ->
                 val group = getCurrentIndexGroup(index)
@@ -118,10 +120,11 @@ class ObservableListGroupingBy<E, G, L>(
                         removeGroup(oldGroup)
                     }
 
-                    val newGroupList = getOrMakeGroup(newGroup)
-                    newGroupList.indexList.add(index)
-                    newGroupList.onAdd.runAll(item, newGroupList.indexList.size - 1)
-                    newGroupList.onUpdate.runAll(newGroupList)
+                    getOrMakeGroup(newGroup) {
+                        it.indexList.add(index)
+                        it.onAdd.runAll(item, it.indexList.size - 1)
+                        it.onUpdate.runAll(it)
+                    }
                 }
             },
             onMoveListener = { item, oldIndex, index ->
