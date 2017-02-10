@@ -127,6 +127,7 @@ class ObservableListWrapper<E>(
         override fun remove() {
             inner.remove()
             onRemove.runAll(lastElement!!, lastIndex)
+            lastIndex--
         }
 
     }
