@@ -74,6 +74,10 @@ class ObservablePropertyMapped<S, T>(val actualObservable: ObservableProperty<S>
                 throw IllegalAccessException()
             }
         }
+
+    override fun update() {
+        actualObservable.update()
+    }
 }
 
 inline fun <S, T> MutableObservableProperty<S>.mapObservable(noinline mapper: (S) -> T, noinline reverseMapper: (T) -> S): ObservablePropertyMapped<S, T> {
