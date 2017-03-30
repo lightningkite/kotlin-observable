@@ -8,7 +8,7 @@ import org.junit.Test
  * Created by joseph on 9/26/16.
  */
 class ObservableListFilteredTest {
-    fun makeTestList() = observableListOf(0, 1, 2, 3, 4, 5, 6, 7)
+    fun makeTestList() = ObservableListWrapper((0..20).toMutableList())
     fun makeTestData(): Pair<ObservableList<Int>, ObservableList<Int>> {
         val list = makeTestList()
         val filtering = list.filtering { it % 2 == 0 }
@@ -18,8 +18,18 @@ class ObservableListFilteredTest {
     @Test
     fun filteringWorks() {
         val (list, filtering) = makeTestData()
-        assertEquals(4, filtering.size)
+        assertEquals(list.filter { it % 2 == 0 }.size, filtering.size)
         assert(filtering.all { it % 2 == 0 }) { "filtering isn't working. ${filtering.joinToString()}" }
+    }
+
+    @Test
+    fun removeAll() {
+        val (list, filtering) = makeTestData()
+        list.removeAll { it % 3 == 0 }
+        println(filtering.joinToString(transform = Int::toString))
+        for (item in filtering) {
+            assert(item % 2 == 0)
+        }
     }
 
     @Test
@@ -112,7 +122,7 @@ class ObservableListFilteredTest {
         val (list, filtering) = makeTestData()
 
         val newItem = 22
-        val expectIndex = 4
+        val expectIndex = list.filter { it % 2 == 0 }.size
 
         var callbackOccurred = false
         filtering.onAdd += { char, index ->

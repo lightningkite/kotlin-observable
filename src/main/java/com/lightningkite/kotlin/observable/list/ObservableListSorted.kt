@@ -103,7 +103,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
 
     override fun contains(element: E): Boolean = source.contains(element)
     override fun containsAll(elements: Collection<E>): Boolean = source.containsAll(elements)
-    override fun get(index: Int): E = source[indexList[index]] ?: throw IllegalStateException("No source specified.")
+    override fun get(index: Int): E = source[indexList[index]]
     override fun indexOf(element: E): Int = indexList.indexOf(source.indexOf(element))
     override fun lastIndexOf(element: E): Int = indexList.indexOf(source.lastIndexOf(element))
     override fun isEmpty(): Boolean = indexList.isEmpty()

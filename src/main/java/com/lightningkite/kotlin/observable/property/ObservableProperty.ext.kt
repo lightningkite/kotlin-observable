@@ -35,6 +35,10 @@ fun <A, B> ObservableProperty<A?>.subOpt(lifecycle: LifecycleConnectable, mapper
     return obs
 }
 
+fun <A, B> ObservableProperty<A>.subObs(getterFun: (A) -> ObservableProperty<B>) {
+
+}
+
 fun <A> ObservableProperty<List<A>>.toObservableList(lifecycle: LifecycleConnectable): ObservableList<A> {
     val list = ObservableListWrapper<A>()
     lifecycle.bind(this) {

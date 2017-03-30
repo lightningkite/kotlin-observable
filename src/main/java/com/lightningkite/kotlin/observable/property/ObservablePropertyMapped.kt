@@ -48,7 +48,6 @@ class ObservablePropertyMapped<S, T>(val actualObservable: ObservableProperty<S>
     override fun retainAll(elements: Collection<(T) -> Unit>): Boolean = throw UnsupportedOperationException()
 
     override fun add(element: (T) -> Unit): Boolean {
-        element(mapper(actualObservable.value))
         val wrapper = Wrapper(element)
         actionToWrapper[element] = wrapper
         return actualObservable.add(wrapper)
@@ -56,7 +55,6 @@ class ObservablePropertyMapped<S, T>(val actualObservable: ObservableProperty<S>
 
     override fun addAll(elements: Collection<(T) -> Unit>): Boolean {
         val value = mapper(actualObservable.value)
-        elements.forEach { it(value) }
 
         return actualObservable.addAll(elements.map {
             val wrapper = Wrapper(it)
@@ -74,6 +72,10 @@ class ObservablePropertyMapped<S, T>(val actualObservable: ObservableProperty<S>
                 throw IllegalAccessException()
             }
         }
+
+    override fun update() {
+        actualObservable.update()
+    }
 }
 
 inline fun <S, T> MutableObservableProperty<S>.mapObservable(noinline mapper: (S) -> T, noinline reverseMapper: (T) -> S): ObservablePropertyMapped<S, T> {

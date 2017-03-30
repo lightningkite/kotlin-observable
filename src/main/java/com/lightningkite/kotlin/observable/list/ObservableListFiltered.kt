@@ -95,6 +95,12 @@ class ObservableListFiltered<E>(
                 val indexOf = indexList.addSorted(index)
                 onAdd.runAll(item, indexOf)
                 onUpdate.runAll(this)
+            } else {
+                for (indexIndex in indexList.indices) {
+                    if (indexList[indexIndex] >= index) {
+                        indexList[indexIndex] += 1
+                    }
+                }
             }
         }
         bind(source.onChange) { old, item, index ->
