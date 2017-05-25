@@ -55,6 +55,11 @@ class ChainTest {
                         transformer = { groupBy { it.toInt() / 2 }.flatMap { it.value.sortedDescending() } }
                 ),
                 makeTestData(
+                        "groupingBy/sorting->sorting->flatMapping",
+                        transforms = { groupingBy({ it.toInt() / 4 }, { it.sorting { a, b -> b < a } }).sorting { a, b -> a.first < b.first }.flatMapping { it.second } },
+                        transformer = { groupBy { it.toInt() / 4 }.entries.sortedBy { it.key }.flatMap { it.value.sortedDescending() } }
+                ),
+                makeTestData(
                         "multiGroupingBy->flatMapping",
                         transforms = { multiGroupingBy({ setOf(it.toInt() / 2, it.toInt() / 3) }).flatMapping { it.second } },
                         transformer = { groupByMulti { setOf(it.toInt() / 2, it.toInt() / 3) }.flatMap { it.value } }
@@ -259,7 +264,8 @@ class ChainTest {
 //                println("Last op $op")
                 it.transformed.asSequence().count()
 //                println(it.source.joinToString(transform = Char::toString))
-
+                assert(it.transformed.toSet().sorted() deepEquals it.transformer.invoke(it.source).toSet().sorted())
+                assert(it.transformed.size.toString() == it.transformer.invoke(it.source).size.toString())
             }
             println(it.transformed.toSet().sorted() deepEquals it.transformer.invoke(it.source).toSet().sorted())
             println(it.transformed.size.toString() + " VS " + it.transformer.invoke(it.source).size.toString())
