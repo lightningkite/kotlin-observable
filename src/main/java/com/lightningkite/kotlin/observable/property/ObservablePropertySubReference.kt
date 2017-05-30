@@ -2,9 +2,6 @@ package com.lightningkite.kotlin.observable.property
 
 import kotlin.reflect.KMutableProperty1
 
-/**
- * Created by jivie on 2/22/16.
- */
 class ObservablePropertySubReference<A, B>(
         val observable: ObservableProperty<A>,
         val getterFun: (A) -> B,
@@ -25,6 +22,8 @@ class ObservablePropertySubReference<A, B>(
     override fun disable() {
         observable.remove(callback)
     }
+
+
 }
 
 fun <A, B> ObservableProperty<A>.sub(getterFun: (A) -> B)
