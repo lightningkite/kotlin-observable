@@ -44,6 +44,29 @@ fun <A, B> LifecycleConnectable.bind(
     })
 }
 
+fun LifecycleConnectable.bindBlind(
+        vararg observables: ObservableProperty<out Any?>,
+        action: () -> Unit
+) {
+    connect(object : LifecycleListener {
+
+        val item = { item: Any? -> action() }
+
+        override fun onStart() {
+            for (obs in observables) {
+                obs.add(item)
+            }
+            action()
+        }
+
+        override fun onStop() {
+            for (obs in observables) {
+                obs.remove(item)
+            }
+        }
+    })
+}
+
 fun <A, B, C> LifecycleConnectable.bind(
         observableA: ObservableProperty<A>,
         observableB: ObservableProperty<B>,
