@@ -11,7 +11,7 @@ class ObservablePropertySubReference<A, B>(
         get() = getterFun(observable.value)
         set(value) {
             setterFun(observable.value, value)
-            update()
+            observable.update()
         }
 
     val callback = { a: A -> update() }
