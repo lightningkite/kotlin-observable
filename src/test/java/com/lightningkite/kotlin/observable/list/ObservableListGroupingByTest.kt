@@ -29,11 +29,11 @@ class ObservableListGroupingByTest {
             println("added index $index")
             println("added item $item")
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add("c4")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -48,11 +48,11 @@ class ObservableListGroupingByTest {
             assertEquals(item, "a4")
             callbackOccurred = true
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add("a4")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -68,11 +68,11 @@ class ObservableListGroupingByTest {
             assertEquals(item, "c4")
             callbackOccurred = true
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add("c4")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -89,11 +89,11 @@ class ObservableListGroupingByTest {
             assert(list.second.contains(new))
             callbackOccurred = true
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add(new)
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -109,11 +109,11 @@ class ObservableListGroupingByTest {
             assertEquals(item, "e1")
             callbackOccurred = true
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add("e1")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -129,11 +129,11 @@ class ObservableListGroupingByTest {
             assertEquals(item, "b1")
             callbackOccurred = true
         }
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.add("b1")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -143,11 +143,11 @@ class ObservableListGroupingByTest {
     @Test
     fun changeNewGroup() {
         val (core, grouped, flattened) = makeSortingTestLists()
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core[2] = "b1"
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         assert(flattened.indexOf("b1") != -1)
@@ -156,7 +156,7 @@ class ObservableListGroupingByTest {
     @Test
     fun changeInternal() {
         val (core, grouped, flattened) = makeSortingTestLists()
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -168,7 +168,7 @@ class ObservableListGroupingByTest {
         }
 
         core[2] = "a4"
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
@@ -178,11 +178,11 @@ class ObservableListGroupingByTest {
     @Test
     fun move() {
         val (core, grouped, flattened) = makeSortingTestLists()
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.move(0, 5)
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
     }
@@ -190,11 +190,11 @@ class ObservableListGroupingByTest {
     @Test
     fun remove() {
         val (core, grouped, flattened) = makeSortingTestLists()
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.removeAt(4)
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
     }
@@ -203,19 +203,19 @@ class ObservableListGroupingByTest {
     fun removeGroup() {
         val (core, grouped, flattened) = makeSortingTestLists()
         val startGroups = grouped.size
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.removeAt(0)
         core.removeAt(0)
         core.removeAt(0)
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         assertEquals(startGroups - 1, grouped.size)
 
         core.add("a3")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
     }
@@ -226,18 +226,18 @@ class ObservableListGroupingByTest {
         val grouped = core.groupingBy({ it.firstOrNull() }, { it.sorting { a, b -> a < b } })
         val flattened = grouped.sorting { a, b -> a.first ?: 'z' < b.first ?: 'z' }.flatMapping { it.second }
 
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
         core.removeAt(0)
         core.removeAt(0)
         core.removeAt(0)
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
 
         core.add("a3")
-        println("core: " + core.joinToString())
+        println("model: " + core.joinToString())
         println("grouped: " + grouped.joinToString { it.first.toString() + ": " + it.second.joinToString() })
         println("flattened: " + flattened.joinToString())
     }
