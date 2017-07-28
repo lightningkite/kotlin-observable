@@ -120,6 +120,7 @@ class CombineObservablePropertyBlind<T>(
         callbacks += observables.map {
             val newListener = { _: Any? -> update() }
             val itFake = it as ObservableProperty<Any?>
+            itFake.add(newListener)
             itFake to newListener
         }
     }
