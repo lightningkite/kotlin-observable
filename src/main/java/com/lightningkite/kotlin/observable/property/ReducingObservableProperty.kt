@@ -1,5 +1,9 @@
 package com.lightningkite.kotlin.observable.property
 
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Predicate
+
 /**
  * Created by joseph on 12/2/16.
  */
@@ -28,6 +32,18 @@ class ReducingObservableProperty<E, T>(
         for (observable in observables) {
             observable.remove(callback)
         }
+    }
+
+    override fun spliterator(): Spliterator<(T) -> Unit> {
+        return super<EnablingMutableCollection>.spliterator()
+    }
+
+    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
+        return super<EnablingMutableCollection>.removeIf(filter)
+    }
+
+    override fun forEach(action: Consumer<in (T) -> Unit>) {
+        super<EnablingMutableCollection>.forEach(action)
     }
 }
 
