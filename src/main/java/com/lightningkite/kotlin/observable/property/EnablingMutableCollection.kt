@@ -13,12 +13,14 @@ abstract class EnablingMutableCollection<E>() : ArrayList<E>() {
     var active = false
     fun checkUp() {
         if (!super.isEmpty() && !active) {
+            active = true
             enable()
         }
     }
 
     fun checkDown() {
         if (super.isEmpty() && active) {
+            active = false
             disable()
         }
     }
