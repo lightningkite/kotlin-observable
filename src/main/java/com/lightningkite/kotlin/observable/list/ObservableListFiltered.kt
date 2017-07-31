@@ -2,6 +2,7 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.addSorted
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.StandardObservableProperty
@@ -53,7 +54,7 @@ class ObservableListFiltered<E>(
         filterObs.add {
             if (source.none(filter)) {
                 indexList.clear()
-                onReplace.runAll(this)
+                onReplace.invokeAll(this)
             } else {
                 var passingIndex = 0
                 for (fullIndex in source.indices) {
@@ -82,7 +83,7 @@ class ObservableListFiltered<E>(
                     }
                 }
             }
-            onUpdate.runAll(this)
+            onUpdate.invokeAll(this)
         }
         bind(source.onAdd) { item, index ->
             val passes = filter(item)
@@ -94,7 +95,7 @@ class ObservableListFiltered<E>(
                 }
                 val indexOf = indexList.addSorted(index)
                 onAdd.runAll(item, indexOf)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             } else {
                 for (indexIndex in indexList.indices) {
                     if (indexList[indexIndex] >= index) {
@@ -111,16 +112,16 @@ class ObservableListFiltered<E>(
                 if (passes) {
                     val insertionIndex = indexList.addSorted(index)
                     onAdd.runAll(item, insertionIndex)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 } else {
                     indexList.removeAt(indexOf)
                     onRemove.runAll(old, indexOf)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 }
             } else {
                 if (indexOf != -1) {
                     onChange.runAll(old, item, indexOf)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 }
             }
         }
@@ -145,7 +146,7 @@ class ObservableListFiltered<E>(
                 }
                 val indexOf = indexList.addSorted(index)
                 onMove.runAll(item, oldIndexOf, indexOf)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             }
         }
         bind(source.onRemove) { item, index ->
@@ -158,7 +159,7 @@ class ObservableListFiltered<E>(
             if (oldIndexOf == -1) return@bind
             indexList.remove(index)
             onRemove.runAll(item, oldIndexOf)
-            onUpdate.runAll(this)
+            onUpdate.invokeAll(this)
         }
         bind(source.onReplace) {
             indexList.clear()
@@ -166,8 +167,8 @@ class ObservableListFiltered<E>(
                 val passes = filter(source[i])
                 if (passes) indexList.add(i)
             }
-            onReplace.runAll(this)
-            onUpdate.runAll(this)
+            onReplace.invokeAll(this)
+            onUpdate.invokeAll(this)
         }
         setup()
     }

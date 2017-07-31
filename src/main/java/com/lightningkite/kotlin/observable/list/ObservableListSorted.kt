@@ -2,6 +2,7 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.mapping
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.observable.property.ObservableProperty
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
@@ -33,7 +34,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                 val sortedIndex = indexGetInsertionIndex(item)
                 indexList.add(sortedIndex, index)
                 onAdd.runAll(item, sortedIndex)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             },
             onRemoveListener = { item, index ->
                 val sortedIndex = indexList.indexOf(index)
@@ -44,7 +45,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                             indexList[i]--
                     }
                     onRemove.runAll(item, sortedIndex)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 }
             },
             onMoveListener = { item, oldIndex, index ->
@@ -59,11 +60,11 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                     onRemove.runAll(old, removeSortedIndex)
                     indexList.add(sortedIndex, index)
                     onAdd.runAll(item, sortedIndex)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 } else {
                     indexList.add(sortedIndex, index)
                     onChange.runAll(old, item, removeSortedIndex)
-                    onUpdate.runAll(this)
+                    onUpdate.invokeAll(this)
                 }
             },
             onReplaceListener = {
@@ -72,8 +73,8 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                     val sortedIndex = indexGetInsertionIndex(item)
                     indexList.add(sortedIndex, index)
                 }
-                onReplace.runAll(this)
-                onUpdate.runAll(this)
+                onReplace.invokeAll(this)
+                onUpdate.invokeAll(this)
             }
     )
 

@@ -1,6 +1,6 @@
 package com.lightningkite.kotlin.observable.property
 
-import com.lightningkite.kotlin.runAll
+import com.lightningkite.kotlin.invokeAll
 import kotlin.reflect.KProperty
 
 /**
@@ -17,5 +17,5 @@ interface ObservableProperty<T> : MutableCollection<(T) -> Unit> {
         return value
     }
 
-    fun update() = this.runAll(value)
+    fun update() = this.invokeAll(value)
 }

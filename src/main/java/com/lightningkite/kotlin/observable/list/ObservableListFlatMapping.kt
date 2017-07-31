@@ -1,6 +1,7 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
@@ -170,7 +171,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
         for (i in 0..list.size - 1) {
             onAdd.runAll(list[i], newBoundary + i)
         }
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
     }
 
     fun onTotalItemRemove(item: S, index: Int) {
@@ -185,7 +186,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 println("Get error at $i")
             onRemove.runAll(list[i], oldBoundary + i)
         }
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
     }
 
     fun clearOldListeners() {
@@ -245,7 +246,7 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val fullIndex = getIndex(myIndex to index)
                 modifyIndiciesAfter(myIndex, 1)
                 onAdd.runAll(item, fullIndex)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             },
             onRemoveListener = { item, index ->
                 val myIndex = source.indexOf(itemContainingList)
@@ -253,21 +254,21 @@ class ObservableListFlatMapping<S, E>(val source: ObservableList<S>, val mapper:
                 val fullIndex = getIndex(myIndex to index)
                 modifyIndiciesAfter(myIndex, -1)
                 onRemove.runAll(item, fullIndex)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             },
             onMoveListener = { item, oldIndex, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 val oldTotalIndex = getIndex(myIndex to oldIndex)
                 val newTotalIndex = getIndex(myIndex to index)
                 onMove.runAll(item, oldTotalIndex, newTotalIndex)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             },
             onChangeListener = { old, item, index ->
                 val myIndex = source.indexOf(itemContainingList)
                 if (myIndex == -1) throw IllegalStateException()
                 val fullIndex = getIndex(myIndex to index)
                 onChange.runAll(old, item, fullIndex)
-                onUpdate.runAll(this)
+                onUpdate.invokeAll(this)
             },
             onReplaceListener = { list ->
                 val myIndex = source.indexOf(itemContainingList)

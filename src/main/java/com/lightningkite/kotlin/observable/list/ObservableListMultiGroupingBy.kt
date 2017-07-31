@@ -1,6 +1,7 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.runAll
@@ -52,7 +53,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                 val current = getOrMakeGroup(group)
                 current.indexList.add(index)
                 current.onAdd.runAll(item, current.indexList.size - 1)
-                current.onUpdate.runAll(current)
+                current.onUpdate.invokeAll(current)
             }
         }
     }
@@ -95,7 +96,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
         override fun compareTo(other: QueuedOnRemoveCall): Int = index.compareTo(other.index)
         override fun invoke() {
             groupList.onRemove.runAll(element, index)
-            groupList.onUpdate.runAll(groupList)
+            groupList.onUpdate.invokeAll(groupList)
         }
     }
 
@@ -103,7 +104,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
         override fun compareTo(other: QueuedOnAddCall): Int = index.compareTo(other.index)
         override fun invoke() {
             groupList.onAdd.runAll(element, index)
-            groupList.onUpdate.runAll(groupList)
+            groupList.onUpdate.invokeAll(groupList)
         }
     }
 
@@ -111,7 +112,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
         override fun compareTo(other: QueuedOnChangeCall): Int = index.compareTo(other.index)
         override fun invoke() {
             groupList.onChange.runAll(oldElement, element, index)
-            groupList.onUpdate.runAll(groupList)
+            groupList.onUpdate.invokeAll(groupList)
         }
     }
 
@@ -123,7 +124,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     val list = getOrMakeGroup(group)
                     list.indexList.add(index)
                     list.onAdd.runAll(item, list.indexList.size - 1)
-                    list.onUpdate.runAll(list)
+                    list.onUpdate.invokeAll(list)
                 }
             },
             onRemoveListener = { item, index ->
@@ -138,7 +139,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                         val indexIndex = groupList.indexList.indexOf(Int.MIN_VALUE)
                         groupList.indexList.removeAt(indexIndex)
                         groupList.onRemove.runAll(item, indexIndex)
-                        groupList.onUpdate.runAll(groupList)
+                        groupList.onUpdate.invokeAll(groupList)
                         if (groupList.isEmpty()) {
                             removeGroup(group)
                         }
@@ -156,7 +157,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(index)
                         groupList.onChange.runAll(oldItem, item, indexIndex)
-                        groupList.onUpdate.runAll(groupList)
+                        groupList.onUpdate.invokeAll(groupList)
                     } else throw IllegalArgumentException()
                 }
                 for (group in removingGroups) {
@@ -164,7 +165,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     val oldIndexIndex = oldGroupList.indexList.indexOf(index)
                     oldGroupList.indexList.removeAt(oldIndexIndex)
                     oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
-                    oldGroupList.onUpdate.runAll(oldGroupList)
+                    oldGroupList.onUpdate.invokeAll(oldGroupList)
                     if (oldGroupList.isEmpty()) {
                         removeGroup(group)
                     }
@@ -173,7 +174,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     val newGroupList = getOrMakeGroup(group)
                     newGroupList.indexList.add(index)
                     newGroupList.onAdd.runAll(item, newGroupList.indexList.size - 1)
-                    newGroupList.onUpdate.runAll(newGroupList)
+                    newGroupList.onUpdate.invokeAll(newGroupList)
                 }
             },
             onMoveListener = { item, oldIndex, index ->

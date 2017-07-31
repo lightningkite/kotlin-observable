@@ -1,6 +1,7 @@
 package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.Disposable
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.runAll
@@ -52,7 +53,7 @@ class ObservableListGroupingBy<E, G, L>(
             getOrMakeGroup(group) {
                 it.indexList.add(index)
                 it.onAdd.runAll(item, it.indexList.size - 1)
-                it.onUpdate.runAll(it)
+                it.onUpdate.invokeAll(it)
             }
         }
     }
@@ -83,7 +84,7 @@ class ObservableListGroupingBy<E, G, L>(
                 getOrMakeGroup(group) {
                     it.indexList.add(index)
                     it.onAdd.runAll(item, it.indexList.size - 1)
-                    it.onUpdate.runAll(it)
+                    it.onUpdate.invokeAll(it)
                 }
             },
             onRemoveListener = { item, index ->
@@ -94,7 +95,7 @@ class ObservableListGroupingBy<E, G, L>(
                     groupList.indexList.removeAt(indexIndex)
                     modifyIndicesBy(index, -1)
                     groupList.onRemove.runAll(item, indexIndex)
-                    groupList.onUpdate.runAll(groupList)
+                    groupList.onUpdate.invokeAll(groupList)
                     if (groupList.isEmpty()) {
                         removeGroup(group)
                     }
@@ -108,14 +109,14 @@ class ObservableListGroupingBy<E, G, L>(
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(index)
                         groupList.onChange.runAll(oldItem, item, indexIndex)
-                        groupList.onUpdate.runAll(groupList)
+                        groupList.onUpdate.invokeAll(groupList)
                     } else throw IllegalArgumentException()
                 } else {
                     val oldGroupList = groups[oldGroup] ?: throw IllegalArgumentException()
                     val oldIndexIndex = oldGroupList.indexList.indexOf(index)
                     oldGroupList.indexList.removeAt(oldIndexIndex)
                     oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
-                    oldGroupList.onUpdate.runAll(oldGroupList)
+                    oldGroupList.onUpdate.invokeAll(oldGroupList)
                     if (oldGroupList.isEmpty()) {
                         removeGroup(oldGroup)
                     }
@@ -123,7 +124,7 @@ class ObservableListGroupingBy<E, G, L>(
                     getOrMakeGroup(newGroup) {
                         it.indexList.add(index)
                         it.onAdd.runAll(item, it.indexList.size - 1)
-                        it.onUpdate.runAll(it)
+                        it.onUpdate.invokeAll(it)
                     }
                 }
             },

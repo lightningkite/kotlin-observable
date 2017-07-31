@@ -1,5 +1,6 @@
 package com.lightningkite.kotlin.observable.list
 
+import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import com.lightningkite.kotlin.runAll
 import java.util.*
@@ -23,7 +24,7 @@ class ObservableListWrapper<E>(
         val old = collection[index]
         collection[index] = element
         onChange.runAll(old, element, index)
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
         return element
     }
 
@@ -32,7 +33,7 @@ class ObservableListWrapper<E>(
         val index = collection.size - 1
         if (result) {
             onAdd.runAll(element, index)
-            onUpdate.runAll(this)
+            onUpdate.invokeAll(this)
         }
         return result
     }
@@ -40,7 +41,7 @@ class ObservableListWrapper<E>(
     override fun add(index: Int, element: E) {
         collection.add(index, element)
         onAdd.runAll(element, index)
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
     }
 
     override fun addAll(elements: Collection<E>): Boolean {
@@ -50,7 +51,7 @@ class ObservableListWrapper<E>(
             onAdd.runAll(e, index)
             index++
         }
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
         return true
     }
 
@@ -61,7 +62,7 @@ class ObservableListWrapper<E>(
             onAdd.runAll(e, currentIndex)
             currentIndex++
         }
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
         return true
     }
 
@@ -71,14 +72,14 @@ class ObservableListWrapper<E>(
         if (index == -1) return false
         collection.removeAt(index)
         onRemove.runAll(element, index)
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
         return true
     }
 
     override fun removeAt(index: Int): E {
         val element = collection.removeAt(index)
         onRemove.runAll(element, index)
-        onUpdate.runAll(this)
+        onUpdate.invokeAll(this)
         return element
     }
 
@@ -96,8 +97,8 @@ class ObservableListWrapper<E>(
 
     override fun clear() {
         collection.clear()
-        onReplace.runAll(this)
-        onUpdate.runAll(this)
+        onReplace.invokeAll(this)
+        onUpdate.invokeAll(this)
     }
 
     override fun isEmpty(): Boolean = collection.isEmpty()
@@ -140,8 +141,8 @@ class ObservableListWrapper<E>(
     override fun replace(list: List<E>) {
         collection.clear()
         collection.addAll(list)
-        onReplace.runAll(this)
-        onUpdate.runAll(this)
+        onReplace.invokeAll(this)
+        onUpdate.invokeAll(this)
     }
 
     override fun move(fromIndex: Int, toIndex: Int) {
