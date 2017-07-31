@@ -1,5 +1,8 @@
 package com.lightningkite.kotlin.observable.property
 
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.reflect.KMutableProperty1
 
 class ObservablePropertySubReference<A, B>(
@@ -24,6 +27,17 @@ class ObservablePropertySubReference<A, B>(
     }
 
 
+    override fun spliterator(): Spliterator<(B) -> Unit> {
+        return super<EnablingMutableCollection>.spliterator()
+    }
+
+    override fun removeIf(filter: Predicate<in (B) -> Unit>): Boolean {
+        return super<EnablingMutableCollection>.removeIf(filter)
+    }
+
+    override fun forEach(action: Consumer<in (B) -> Unit>) {
+        super<EnablingMutableCollection>.forEach(action)
+    }
 }
 
 fun <A, B> ObservableProperty<A>.sub(getterFun: (A) -> B)
