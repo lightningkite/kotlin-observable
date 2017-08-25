@@ -125,6 +125,41 @@ fun <A, B, C, D> LifecycleConnectable.bind(
     })
 }
 
+fun <A, B, C, D, E> LifecycleConnectable.bind(
+        observableA: ObservableProperty<A>,
+        observableB: ObservableProperty<B>,
+        observableC: ObservableProperty<C>,
+        observableD: ObservableProperty<D>,
+        observableE: ObservableProperty<E>,
+        action: (A, B, C, D, E) -> Unit
+) {
+    connect(object : LifecycleListener {
+
+        val itemA = { item: A -> action(item, observableB.value, observableC.value, observableD.value, observableE.value) }
+        val itemB = { item: B -> action(observableA.value, item, observableC.value, observableD.value, observableE.value) }
+        val itemC = { item: C -> action(observableA.value, observableB.value, item, observableD.value, observableE.value) }
+        val itemD = { item: D -> action(observableA.value, observableB.value, observableC.value, item, observableE.value) }
+        val itemE = { item: E -> action(observableA.value, observableB.value, observableC.value, observableD.value, item) }
+
+        override fun onStart() {
+            observableA.add(itemA)
+            observableB.add(itemB)
+            observableC.add(itemC)
+            observableD.add(itemD)
+            observableE.add(itemE)
+            action(observableA.value, observableB.value, observableC.value, observableD.value, observableE.value)
+        }
+
+        override fun onStop() {
+            observableA.remove(itemA)
+            observableB.remove(itemB)
+            observableC.remove(itemC)
+            observableD.remove(itemD)
+            observableE.remove(itemE)
+        }
+    })
+}
+
 inline fun <A, T> LifecycleConnectable.bindSub(observable: ObservableProperty<A>, crossinline mapper: (A) -> ObservableProperty<T>, noinline action: (T) -> Unit) {
     val obs = ObservableObservableProperty(mapper(observable.value))
     bind(observable) {
