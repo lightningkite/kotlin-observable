@@ -2,7 +2,6 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.invokeAll
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
-import com.lightningkite.kotlin.runAll
 import java.util.*
 
 /**
@@ -23,7 +22,7 @@ class ObservableListWrapper<E>(
     override fun set(index: Int, element: E): E {
         val old = collection[index]
         collection[index] = element
-        onChange.runAll(old, element, index)
+        onChange.invokeAll(old, element, index)
         onUpdate.invokeAll(this)
         return element
     }
@@ -32,7 +31,7 @@ class ObservableListWrapper<E>(
         val result = collection.add(element)
         val index = collection.size - 1
         if (result) {
-            onAdd.runAll(element, index)
+            onAdd.invokeAll(element, index)
             onUpdate.invokeAll(this)
         }
         return result
@@ -40,7 +39,7 @@ class ObservableListWrapper<E>(
 
     override fun add(index: Int, element: E) {
         collection.add(index, element)
-        onAdd.runAll(element, index)
+        onAdd.invokeAll(element, index)
         onUpdate.invokeAll(this)
     }
 
@@ -48,7 +47,7 @@ class ObservableListWrapper<E>(
         var index = collection.size
         for (e in elements) {
             collection.add(e)
-            onAdd.runAll(e, index)
+            onAdd.invokeAll(e, index)
             index++
         }
         onUpdate.invokeAll(this)
@@ -59,7 +58,7 @@ class ObservableListWrapper<E>(
         var currentIndex = index
         for (e in elements) {
             collection.add(currentIndex, e)
-            onAdd.runAll(e, currentIndex)
+            onAdd.invokeAll(e, currentIndex)
             currentIndex++
         }
         onUpdate.invokeAll(this)
@@ -71,14 +70,14 @@ class ObservableListWrapper<E>(
         val index = indexOf(element)
         if (index == -1) return false
         collection.removeAt(index)
-        onRemove.runAll(element, index)
+        onRemove.invokeAll(element, index)
         onUpdate.invokeAll(this)
         return true
     }
 
     override fun removeAt(index: Int): E {
         val element = collection.removeAt(index)
-        onRemove.runAll(element, index)
+        onRemove.invokeAll(element, index)
         onUpdate.invokeAll(this)
         return element
     }
@@ -127,7 +126,7 @@ class ObservableListWrapper<E>(
 
         override fun remove() {
             inner.remove()
-            onRemove.runAll(lastElement!!, lastIndex)
+            onRemove.invokeAll(lastElement!!, lastIndex)
             lastIndex--
         }
 
@@ -148,7 +147,7 @@ class ObservableListWrapper<E>(
     override fun move(fromIndex: Int, toIndex: Int) {
         val item = collection.removeAt(fromIndex)
         collection.add(toIndex, item)
-        onMove.runAll(item, fromIndex, toIndex)
+        onMove.invokeAll(item, fromIndex, toIndex)
     }
 }
 
