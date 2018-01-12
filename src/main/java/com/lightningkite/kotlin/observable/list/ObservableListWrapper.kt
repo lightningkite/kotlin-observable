@@ -1,6 +1,6 @@
 package com.lightningkite.kotlin.observable.list
 
-import com.lightningkite.kotlin.invokeAll
+import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
 import java.util.*
 

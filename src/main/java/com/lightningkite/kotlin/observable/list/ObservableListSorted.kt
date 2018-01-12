@@ -1,12 +1,10 @@
 package com.lightningkite.kotlin.observable.list
 
-import com.lightningkite.kotlin.Disposable
 import com.lightningkite.kotlin.collection.mapping
-import com.lightningkite.kotlin.invokeAll
+import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.observable.property.ObservableProperty
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
-import com.lightningkite.kotlin.runAll
 import java.util.*
 
 /**

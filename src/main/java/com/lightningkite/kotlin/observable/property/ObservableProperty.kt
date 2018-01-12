@@ -1,6 +1,6 @@
 package com.lightningkite.kotlin.observable.property
 
-import com.lightningkite.kotlin.invokeAll
+import com.lightningkite.kotlin.lambda.invokeAll
 import kotlin.reflect.KProperty
 
 /**

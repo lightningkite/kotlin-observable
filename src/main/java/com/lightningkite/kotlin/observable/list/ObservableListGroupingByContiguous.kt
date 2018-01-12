@@ -2,7 +2,7 @@
 //
 //import com.lightningkite.kotlin.Disposable
 //import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
-//import com.lightningkite.kotlin.runAll
+//import com.lightningkite.kotlin.lambda.runAll
 //import java.util.*
 //
 ///**
