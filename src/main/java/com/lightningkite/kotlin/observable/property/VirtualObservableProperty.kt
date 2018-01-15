@@ -1,5 +1,7 @@
 package com.lightningkite.kotlin.observable.property
 
+import com.lightningkite.kotlin.lambda.invokeAll
+
 class VirtualObservableProperty<T>(
         val getterFun: () -> T,
         val event: MutableCollection<(T) -> Unit>
@@ -8,7 +10,7 @@ class VirtualObservableProperty<T>(
     override val value: T
         get() = getterFun()
 
-    val listener = { t: T -> update() }
+    val listener = { t: T -> invokeAll(t) }
 
     override fun enable() {
         event.add(listener)

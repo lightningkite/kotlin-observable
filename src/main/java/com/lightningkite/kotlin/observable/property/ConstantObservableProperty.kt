@@ -3,6 +3,7 @@ package com.lightningkite.kotlin.observable.property
 import kotlin.reflect.KProperty
 
 /**
+ * A constant observable property - the value never changes.
  * Created by joseph on 12/2/16.
  */
 class ConstantObservableProperty<T>(override val value: T) : ObservableProperty<T> {

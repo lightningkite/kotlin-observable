@@ -1,10 +1,10 @@
 package com.lightningkite.kotlin.observable.property
 
+import com.lightningkite.kotlin.lambda.invokeAll
 import java.util.*
-import java.util.function.Consumer
-import java.util.function.Predicate
 
 /**
+ * Combines several observable properties into one.
  * Created by joseph on 12/2/16.
  */
 class CombineObservableProperty2<A, B, T>(
@@ -15,9 +15,9 @@ class CombineObservableProperty2<A, B, T>(
 
     override var value = combine(observableA.value, observableB.value)
 
-    override fun update() {
+    fun update() {
         value = combine(observableA.value, observableB.value)
-        super.update()
+        invokeAll(value)
     }
 
     val callbackA = { item: A ->
@@ -36,20 +36,12 @@ class CombineObservableProperty2<A, B, T>(
         observableA.remove(callbackA)
         observableB.remove(callbackB)
     }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
-    }
 }
 
+/**
+ * Combines several observable properties into one.
+ * Created by joseph on 12/2/16.
+ */
 class CombineObservableProperty3<A, B, C, T>(
         val observableA: ObservableProperty<A>,
         val observableB: ObservableProperty<B>,
@@ -59,9 +51,9 @@ class CombineObservableProperty3<A, B, C, T>(
 
     override var value = combine(observableA.value, observableB.value, observableC.value)
 
-    override fun update() {
+    fun update() {
         value = combine(observableA.value, observableB.value, observableC.value)
-        super.update()
+        invokeAll(value)
     }
 
     val callbackA = { item: A ->
@@ -85,20 +77,12 @@ class CombineObservableProperty3<A, B, C, T>(
         observableB.remove(callbackB)
         observableC.remove(callbackC)
     }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
-    }
 }
 
+/**
+ * Combines several observable properties into one, ignoring the values.
+ * Created by joseph on 12/2/16.
+ */
 @Suppress("UNCHECKED_CAST")
 class CombineObservablePropertyBlind<T>(
         val observables: Collection<ObservableProperty<*>>,
@@ -109,9 +93,9 @@ class CombineObservablePropertyBlind<T>(
 
     override var value = combine()
 
-    override fun update() {
+    fun update() {
         value = combine()
-        super.update()
+        invokeAll(value)
     }
 
     val callbacks = HashMap<ObservableProperty<Any?>, (Any?) -> Unit>()
@@ -128,17 +112,5 @@ class CombineObservablePropertyBlind<T>(
     override fun disable() {
         callbacks.forEach { (key, value) -> key.remove(value) }
         callbacks.clear()
-    }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
     }
 }

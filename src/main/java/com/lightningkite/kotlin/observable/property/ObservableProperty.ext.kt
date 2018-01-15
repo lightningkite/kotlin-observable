@@ -4,9 +4,13 @@ import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.observable.list.ObservableList
 import com.lightningkite.kotlin.observable.list.ObservableListWrapper
 
-/**
- * Created by jivie on 6/16/16.
- */
+operator fun <T> ObservableProperty<T>.plusAssign(lambda: (T) -> Unit): Unit {
+    add(lambda)
+}
+
+operator fun <T> ObservableProperty<T>.minusAssign(lambda: (T) -> Unit): Unit {
+    remove(lambda)
+}
 
 fun <A> ObservableProperty<A>.addAndInvoke(lambda: (A) -> Unit) {
     add(lambda)

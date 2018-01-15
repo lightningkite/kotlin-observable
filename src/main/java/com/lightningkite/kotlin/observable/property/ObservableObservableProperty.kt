@@ -1,11 +1,9 @@
 package com.lightningkite.kotlin.observable.property
 
-import com.lightningkite.kotlin.Disposable
-
 /**
  * Created by jivie on 4/5/16.
  */
-class ObservableObservableProperty<T>(initialObservable: ObservableProperty<T>) : ObservablePropertyBase<T>(), Disposable {
+class ObservableObservableProperty<T>(initialObservable: ObservableProperty<T>) : BaseObservableProperty<T>(), Disposable {
     val myListener: (T) -> Unit = {
         super.update(it)
     }

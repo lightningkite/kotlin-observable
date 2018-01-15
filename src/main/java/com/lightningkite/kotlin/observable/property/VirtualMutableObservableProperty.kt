@@ -1,5 +1,7 @@
 package com.lightningkite.kotlin.observable.property
 
+import com.lightningkite.kotlin.lambda.invokeAll
+
 /**
  *
  * Created by josep on 8/19/2017.
@@ -16,7 +18,7 @@ class VirtualMutableObservableProperty<T>(
             setterFun(value)
         }
 
-    val listener = { t: T -> update() }
+    val listener = { t: T -> invokeAll(t) }
 
     override fun enable() {
         event.add(listener)

@@ -3,6 +3,7 @@ package com.lightningkite.kotlin.observable.property
 import java.util.*
 
 /**
+ * A collection that calls [enable] when the collection has an element in it, and [disable] when the collection is empty.
  * Created by joseph on 12/2/16.
  */
 abstract class EnablingMutableCollection<E>() : ArrayList<E>() {

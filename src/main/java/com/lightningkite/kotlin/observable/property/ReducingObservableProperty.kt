@@ -1,10 +1,9 @@
 package com.lightningkite.kotlin.observable.property
 
-import java.util.*
-import java.util.function.Consumer
-import java.util.function.Predicate
+import com.lightningkite.kotlin.lambda.invokeAll
 
 /**
+ * An observable property from other observable properties, reduced into a single on via a given function, [reduce].
  * Created by joseph on 12/2/16.
  */
 class ReducingObservableProperty<E, T>(
@@ -13,9 +12,9 @@ class ReducingObservableProperty<E, T>(
 ) : EnablingMutableCollection<(T) -> Unit>(), ObservableProperty<T> {
 
     override var value = reduce(observables.map { it.value })
-    override fun update() {
+    fun update() {
         value = reduce(observables.map { it.value })
-        super.update()
+        invokeAll(value)
     }
 
     val callback = { item: E ->
@@ -33,18 +32,9 @@ class ReducingObservableProperty<E, T>(
             observable.remove(callback)
         }
     }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
-    }
 }
 
+/**
+ * Creates an observable property from many, transforming the value via the given function, [reduce].
+ */
 fun <T, E> List<ObservableProperty<E>>.reducing(reduce: (List<E>) -> T): ObservableProperty<T> = ReducingObservableProperty(this, reduce)

@@ -1,7 +1,9 @@
 package com.lightningkite.kotlin.observable.property
 
+import com.lightningkite.kotlin.lambda.invokeAll
+
 /**
- *
+ * Transforms an observable to observe another observable.
  * Created by jivie on 2/22/16.
  */
 class ObservablePropertySubObservable<A, B>(
@@ -21,10 +23,10 @@ class ObservablePropertySubObservable<A, B>(
         }
 
     val outerCallback = { a: A ->
-        update()
+        invokeAll(value)
         resub()
     }
-    val innerCallback = { b: B -> update() }
+    val innerCallback = { b: B -> invokeAll(value) }
 
     override fun enable() {
         owningObservable.add(outerCallback)
@@ -39,7 +41,7 @@ class ObservablePropertySubObservable<A, B>(
     private fun resub() {
         unsub()
         val sub = owningObservable.value.let(getter)
-        sub += innerCallback
+        sub.add(innerCallback)
         currentSub = sub
     }
 
@@ -49,4 +51,8 @@ class ObservablePropertySubObservable<A, B>(
     }
 }
 
+/**
+ * Transforms an observable to observe an observable within the observable.
+ * Trippy, right?
+ */
 fun <A, B> ObservableProperty<A>.subObs(getterFun: (A) -> ObservableProperty<B>) = ObservablePropertySubObservable(this, getterFun)

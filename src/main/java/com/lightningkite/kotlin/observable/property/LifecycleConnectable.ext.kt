@@ -4,10 +4,28 @@ import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 
 /**
- * Extensions that allow using ObservablePropertys with the LifecycleConnectable.
+ * Extensions that allow using [ObservableProperty]s with the [LifecycleConnectable].
  * Created by jivie on 6/1/16.
  */
 
+/**
+ * Runs [listener] with the value in [observable] every time the value changes until the lifecycle is stopped.
+ */
+fun <T> LifecycleConnectable.listen(observable: ObservableProperty<T>, listener: (T) -> Unit) {
+    connect(object : LifecycleListener {
+        override fun onStart() {
+            observable.add(listener)
+        }
+
+        override fun onStop() {
+            observable.remove(listener)
+        }
+    })
+}
+
+/**
+ * Runs [listener] with the value in [observable] on startup and every time the value changes until the lifecycle is stopped.
+ */
 fun <T> LifecycleConnectable.bind(observable: ObservableProperty<T>, listener: (T) -> Unit) {
     connect(object : LifecycleListener {
         override fun onStart() {
@@ -21,6 +39,9 @@ fun <T> LifecycleConnectable.bind(observable: ObservableProperty<T>, listener: (
     })
 }
 
+/**
+ * Runs [action] with the value in the observables on startup and every time the value changes until the lifecycle is stopped.
+ */
 fun <A, B> LifecycleConnectable.bind(
         observableA: ObservableProperty<A>,
         observableB: ObservableProperty<B>,
@@ -44,29 +65,9 @@ fun <A, B> LifecycleConnectable.bind(
     })
 }
 
-fun LifecycleConnectable.bindBlind(
-        vararg observables: ObservableProperty<out Any?>,
-        action: () -> Unit
-) {
-    connect(object : LifecycleListener {
-
-        val item = { item: Any? -> action() }
-
-        override fun onStart() {
-            for (obs in observables) {
-                obs.add(item)
-            }
-            action()
-        }
-
-        override fun onStop() {
-            for (obs in observables) {
-                obs.remove(item)
-            }
-        }
-    })
-}
-
+/**
+ * Runs [action] with the value in the observables on startup and every time the value changes until the lifecycle is stopped.
+ */
 fun <A, B, C> LifecycleConnectable.bind(
         observableA: ObservableProperty<A>,
         observableB: ObservableProperty<B>,
@@ -94,6 +95,9 @@ fun <A, B, C> LifecycleConnectable.bind(
     })
 }
 
+/**
+ * Runs [action] with the value in the observables on startup and every time the value changes until the lifecycle is stopped.
+ */
 fun <A, B, C, D> LifecycleConnectable.bind(
         observableA: ObservableProperty<A>,
         observableB: ObservableProperty<B>,
@@ -125,6 +129,9 @@ fun <A, B, C, D> LifecycleConnectable.bind(
     })
 }
 
+/**
+ * Runs [action] with the value in the observables on startup and every time the value changes until the lifecycle is stopped.
+ */
 fun <A, B, C, D, E> LifecycleConnectable.bind(
         observableA: ObservableProperty<A>,
         observableB: ObservableProperty<B>,
@@ -160,10 +167,28 @@ fun <A, B, C, D, E> LifecycleConnectable.bind(
     })
 }
 
-inline fun <A, T> LifecycleConnectable.bindSub(observable: ObservableProperty<A>, crossinline mapper: (A) -> ObservableProperty<T>, noinline action: (T) -> Unit) {
-    val obs = ObservableObservableProperty(mapper(observable.value))
-    bind(observable) {
-        obs.observable = mapper(it)
-    }
-    bind(obs, action)
+/**
+ * Runs [action] every time the value changes in the observables until the lifecycle is stopped.
+ */
+fun LifecycleConnectable.bindBlind(
+        vararg observables: ObservableProperty<out Any?>,
+        action: () -> Unit
+) {
+    connect(object : LifecycleListener {
+
+        val item = { item: Any? -> action() }
+
+        override fun onStart() {
+            for (obs in observables) {
+                obs.add(item)
+            }
+            action()
+        }
+
+        override fun onStop() {
+            for (obs in observables) {
+                obs.remove(item)
+            }
+        }
+    })
 }
