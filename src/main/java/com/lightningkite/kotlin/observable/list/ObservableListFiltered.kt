@@ -5,6 +5,7 @@ import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
 import com.lightningkite.kotlin.observable.property.StandardObservableProperty
+import java.io.Closeable
 import java.util.*
 
 /**
@@ -13,7 +14,7 @@ import java.util.*
  */
 class ObservableListFiltered<E>(
         source: ObservableList<E>
-) : ObservableListIndicies<E>(source), Disposable {
+) : ObservableListIndicies<E>(source), Closeable {
     init {
         indexList.addAll(source.indices)
     }
@@ -38,7 +39,7 @@ class ObservableListFiltered<E>(
         connected = true
     }
 
-    override fun dispose() {
+    override fun close() {
         if (!connected) return
         for ((collection, element) in bindings) {
             collection.remove(element)
@@ -73,15 +74,15 @@ class ObservableListFiltered<E>(
                     if (passes && !previouslyPassing) {
                         //add to the list
                         val addPos = indexList.addSorted(fullIndex)
-                        onAdd.runAll(source[fullIndex], addPos)
+                        onAdd.invokeAll(source[fullIndex], addPos)
                     } else if (!passes && previouslyPassing) {
                         //remove from the list
                         indexList.removeAt(passingIndex)
-                        onRemove.runAll(source[fullIndex], passingIndex)
+                        onRemove.invokeAll(source[fullIndex], passingIndex)
                     }
                 }
             }
-            onUpdate.invokeAll(this)
+            onUpdate.update()
         }
         bind(source.onAdd) { item, index ->
             val passes = filter(item)
@@ -92,8 +93,8 @@ class ObservableListFiltered<E>(
                     }
                 }
                 val indexOf = indexList.addSorted(index)
-                onAdd.runAll(item, indexOf)
-                onUpdate.invokeAll(this)
+                onAdd.invokeAll(item, indexOf)
+                onUpdate.update()
             } else {
                 for (indexIndex in indexList.indices) {
                     if (indexList[indexIndex] >= index) {
@@ -109,17 +110,17 @@ class ObservableListFiltered<E>(
             if (passes != passed) {
                 if (passes) {
                     val insertionIndex = indexList.addSorted(index)
-                    onAdd.runAll(item, insertionIndex)
-                    onUpdate.invokeAll(this)
+                    onAdd.invokeAll(item, insertionIndex)
+                    onUpdate.update()
                 } else {
                     indexList.removeAt(indexOf)
-                    onRemove.runAll(old, indexOf)
-                    onUpdate.invokeAll(this)
+                    onRemove.invokeAll(old, indexOf)
+                    onUpdate.update()
                 }
             } else {
                 if (indexOf != -1) {
-                    onChange.runAll(old, item, indexOf)
-                    onUpdate.invokeAll(this)
+                    onChange.invokeAll(old, item, indexOf)
+                    onUpdate.update()
                 }
             }
         }
@@ -143,8 +144,8 @@ class ObservableListFiltered<E>(
                     }
                 }
                 val indexOf = indexList.addSorted(index)
-                onMove.runAll(item, oldIndexOf, indexOf)
-                onUpdate.invokeAll(this)
+                onMove.invokeAll(item, oldIndexOf, indexOf)
+                onUpdate.update()
             }
         }
         bind(source.onRemove) { item, index ->
@@ -156,8 +157,8 @@ class ObservableListFiltered<E>(
             }
             if (oldIndexOf == -1) return@bind
             indexList.remove(index)
-            onRemove.runAll(item, oldIndexOf)
-            onUpdate.invokeAll(this)
+            onRemove.invokeAll(item, oldIndexOf)
+            onUpdate.update()
         }
         bind(source.onReplace) {
             indexList.clear()
@@ -166,21 +167,21 @@ class ObservableListFiltered<E>(
                 if (passes) indexList.add(i)
             }
             onReplace.invokeAll(this)
-            onUpdate.invokeAll(this)
+            onUpdate.update()
         }
         setup()
     }
 }
 
-inline fun <E> ObservableList<E>.filtering(): ObservableListFiltered<E>
+fun <E> ObservableList<E>.filtering(): ObservableListFiltered<E>
         = ObservableListFiltered(this)
 
-inline fun <E> ObservableList<E>.filtering(noinline initFilter: (E) -> Boolean): ObservableListFiltered<E>
+fun <E> ObservableList<E>.filtering(initFilter: (E) -> Boolean): ObservableListFiltered<E>
         = ObservableListFiltered(this).apply {
     filter = initFilter
 }
 
-inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable): ObservableListFiltered<E> {
+fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable): ObservableListFiltered<E> {
     val list = ObservableListFiltered(this)
     lifecycle.connect(object : LifecycleListener {
         override fun onStart() {
@@ -188,13 +189,13 @@ inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable): Obs
         }
 
         override fun onStop() {
-            list.dispose()
+            list.close()
         }
     })
     return list
 }
 
-inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable, noinline initFilter: (E) -> Boolean): ObservableListFiltered<E> {
+fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable, initFilter: (E) -> Boolean): ObservableListFiltered<E> {
     val list = ObservableListFiltered(this).apply {
         filter = initFilter
     }
@@ -204,7 +205,7 @@ inline fun <E> ObservableList<E>.filtering(lifecycle: LifecycleConnectable, noin
         }
 
         override fun onStop() {
-            list.dispose()
+            list.close()
         }
     })
     return list

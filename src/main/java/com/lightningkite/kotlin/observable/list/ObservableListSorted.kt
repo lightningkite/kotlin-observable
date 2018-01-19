@@ -3,14 +3,15 @@ package com.lightningkite.kotlin.observable.list
 import com.lightningkite.kotlin.collection.mapping
 import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
-import com.lightningkite.kotlin.observable.property.ObservableProperty
+import com.lightningkite.kotlin.observable.property.MutableObservableProperty
 import com.lightningkite.kotlin.observable.property.ObservablePropertyReference
+import java.io.Closeable
 import java.util.*
 
 /**
  * Created by jivie on 5/23/16.
  */
-class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) -> Boolean) : ObservableList<E>, Disposable {
+class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) -> Boolean) : ObservableList<E>, Closeable {
 
     val indexList = ArrayList<Int>()
 
@@ -31,8 +32,8 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                 }
                 val sortedIndex = indexGetInsertionIndex(item)
                 indexList.add(sortedIndex, index)
-                onAdd.runAll(item, sortedIndex)
-                onUpdate.invokeAll(this)
+                onAdd.invokeAll(item, sortedIndex)
+                onUpdate.value = this
             },
             onRemoveListener = { item, index ->
                 val sortedIndex = indexList.indexOf(index)
@@ -42,8 +43,8 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                         if (indexList[i] >= index)
                             indexList[i]--
                     }
-                    onRemove.runAll(item, sortedIndex)
-                    onUpdate.invokeAll(this)
+                    onRemove.invokeAll(item, sortedIndex)
+                    onUpdate.value = this
                 }
             },
             onMoveListener = { item, oldIndex, index ->
@@ -55,14 +56,14 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                 val sortedIndex = indexGetInsertionIndex(item)
 
                 if (removeSortedIndex != sortedIndex) {
-                    onRemove.runAll(old, removeSortedIndex)
+                    onRemove.invokeAll(old, removeSortedIndex)
                     indexList.add(sortedIndex, index)
-                    onAdd.runAll(item, sortedIndex)
-                    onUpdate.invokeAll(this)
+                    onAdd.invokeAll(item, sortedIndex)
+                    onUpdate.value = this
                 } else {
                     indexList.add(sortedIndex, index)
-                    onChange.runAll(old, item, removeSortedIndex)
-                    onUpdate.invokeAll(this)
+                    onChange.invokeAll(old, item, removeSortedIndex)
+                    onUpdate.value = this
                 }
             },
             onReplaceListener = {
@@ -72,7 +73,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
                     indexList.add(sortedIndex, index)
                 }
                 onReplace.invokeAll(this)
-                onUpdate.invokeAll(this)
+                onUpdate.value = this
             }
     )
 
@@ -92,7 +93,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
         connected = true
     }
 
-    override fun dispose() {
+    override fun close() {
         if (!connected) return
         source.removeListenerSet(listenerSet)
         connected = false
@@ -135,7 +136,7 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
     override val onAdd = HashSet<(E, Int) -> Unit>()
     override val onChange = HashSet<(E, E, Int) -> Unit>()
     override val onMove = HashSet<(E, Int, Int) -> Unit>()
-    override val onUpdate: ObservableProperty<ObservableList<E>> = ObservablePropertyReference<ObservableList<E>>({ this@ObservableListSorted }, { replace(it) })
+    override val onUpdate: MutableObservableProperty<ObservableList<E>> = ObservablePropertyReference<ObservableList<E>>({ this@ObservableListSorted }, { replace(it) })
     override val onReplace = HashSet<(ObservableList<E>) -> Unit>()
     override val onRemove = HashSet<(E, Int) -> Unit>()
 
@@ -148,13 +149,10 @@ class ObservableListSorted<E>(val source: ObservableList<E>, val sorter: (E, E) 
 
 }
 
-@Deprecated("This has been renamed to 'sorting' because it sorts on the fly.", ReplaceWith("sorting(sorter)", "com.lightningkite.kotlin.observable.list.sorting"))
-inline fun <E> ObservableList<E>.sorted(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> = sorting(sorter)
-
-inline fun <E> ObservableList<E>.sorting(noinline sorter: (E, E) -> Boolean): ObservableListSorted<E>
+fun <E> ObservableList<E>.sorting(sorter: (E, E) -> Boolean): ObservableListSorted<E>
         = ObservableListSorted(this, sorter)
 
-inline fun <E> ObservableList<E>.sorting(lifecycle: LifecycleConnectable, noinline sorter: (E, E) -> Boolean): ObservableListSorted<E> {
+fun <E> ObservableList<E>.sorting(lifecycle: LifecycleConnectable, sorter: (E, E) -> Boolean): ObservableListSorted<E> {
     val list = ObservableListSorted(this, sorter)
     return list
 }

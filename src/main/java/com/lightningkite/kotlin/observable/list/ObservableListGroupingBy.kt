@@ -3,10 +3,11 @@ package com.lightningkite.kotlin.observable.list
 import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
+import java.io.Closeable
 import java.util.*
 
 /**
- * Allows you to observe the changes to a list.
+ * Gives you a grouped-by view of an observable list.
  * Created by josep on 9/7/2015.
  */
 class ObservableListGroupingBy<E, G, L>(
@@ -14,7 +15,7 @@ class ObservableListGroupingBy<E, G, L>(
         val grouper: (E) -> G,
         val listWrapper: (ObservableList<E>) -> L,
         val innerList: ObservableListWrapper<Pair<G, L>> = observableListOf()
-) : ObservableList<Pair<G, L>> by innerList, Disposable {
+) : ObservableList<Pair<G, L>> by innerList, Closeable {
 
     private inner class InnerList() : ObservableListIndicies<E>(source)
 
@@ -50,8 +51,8 @@ class ObservableListGroupingBy<E, G, L>(
             val group = grouper(item)
             getOrMakeGroup(group) {
                 it.indexList.add(index)
-                it.onAdd.runAll(item, it.indexList.size - 1)
-                it.onUpdate.invokeAll(it)
+                it.onAdd.invokeAll(item, it.indexList.size - 1)
+                it.onUpdate.update()
             }
         }
     }
@@ -81,8 +82,8 @@ class ObservableListGroupingBy<E, G, L>(
                 val group = grouper(item)
                 getOrMakeGroup(group) {
                     it.indexList.add(index)
-                    it.onAdd.runAll(item, it.indexList.size - 1)
-                    it.onUpdate.invokeAll(it)
+                    it.onAdd.invokeAll(item, it.indexList.size - 1)
+                    it.onUpdate.update()
                 }
             },
             onRemoveListener = { item, index ->
@@ -92,8 +93,8 @@ class ObservableListGroupingBy<E, G, L>(
                     val indexIndex = groupList.indexList.indexOf(index)
                     groupList.indexList.removeAt(indexIndex)
                     modifyIndicesBy(index, -1)
-                    groupList.onRemove.runAll(item, indexIndex)
-                    groupList.onUpdate.invokeAll(groupList)
+                    groupList.onRemove.invokeAll(item, indexIndex)
+                    groupList.onUpdate.update()
                     if (groupList.isEmpty()) {
                         removeGroup(group)
                     }
@@ -106,23 +107,23 @@ class ObservableListGroupingBy<E, G, L>(
                     val groupList = groups[oldGroup]
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(index)
-                        groupList.onChange.runAll(oldItem, item, indexIndex)
-                        groupList.onUpdate.invokeAll(groupList)
+                        groupList.onChange.invokeAll(oldItem, item, indexIndex)
+                        groupList.onUpdate.update()
                     } else throw IllegalArgumentException()
                 } else {
                     val oldGroupList = groups[oldGroup] ?: throw IllegalArgumentException()
                     val oldIndexIndex = oldGroupList.indexList.indexOf(index)
                     oldGroupList.indexList.removeAt(oldIndexIndex)
-                    oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
-                    oldGroupList.onUpdate.invokeAll(oldGroupList)
+                    oldGroupList.onRemove.invokeAll(oldItem, oldIndexIndex)
+                    oldGroupList.onUpdate.update()
                     if (oldGroupList.isEmpty()) {
                         removeGroup(oldGroup)
                     }
 
                     getOrMakeGroup(newGroup) {
                         it.indexList.add(index)
-                        it.onAdd.runAll(item, it.indexList.size - 1)
-                        it.onUpdate.invokeAll(it)
+                        it.onAdd.invokeAll(item, it.indexList.size - 1)
+                        it.onUpdate.update()
                     }
                 }
             },
@@ -168,7 +169,7 @@ class ObservableListGroupingBy<E, G, L>(
         source.addListenerSet(listener)
     }
 
-    override fun dispose() {
+    override fun close() {
         source.removeListenerSet(listener)
         innerList.clear()
     }
@@ -191,12 +192,12 @@ fun <E, G, L> ObservableList<E>.groupingBy(
         }
 
         override fun onStop() {
-            list.dispose()
+            list.close()
         }
     })
     return list
 }
 
-inline fun <E, G> ObservableList<E>.groupingBy(noinline grouper: (E) -> G) = groupingBy(grouper, { it })
+fun <E, G> ObservableList<E>.groupingBy(grouper: (E) -> G) = groupingBy(grouper, { it })
 
-inline fun <E, G> ObservableList<E>.groupingBy(lifecycle: LifecycleConnectable, noinline grouper: (E) -> G) = groupingBy(lifecycle, grouper, { it })
+fun <E, G> ObservableList<E>.groupingBy(lifecycle: LifecycleConnectable, grouper: (E) -> G) = groupingBy(lifecycle, grouper, { it })

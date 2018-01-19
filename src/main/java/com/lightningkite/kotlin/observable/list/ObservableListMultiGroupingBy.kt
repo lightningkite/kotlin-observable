@@ -3,6 +3,7 @@ package com.lightningkite.kotlin.observable.list
 import com.lightningkite.kotlin.lambda.invokeAll
 import com.lightningkite.kotlin.lifecycle.LifecycleConnectable
 import com.lightningkite.kotlin.lifecycle.LifecycleListener
+import java.io.Closeable
 import java.util.*
 
 /**
@@ -14,7 +15,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
         val grouper: (E) -> Collection<G>,
         val listWrapper: (ObservableList<E>) -> L,
         val innerList: ObservableListWrapper<Pair<G, L>> = observableListOf()
-) : ObservableList<Pair<G, L>> by innerList, Disposable {
+) : ObservableList<Pair<G, L>> by innerList, Closeable {
 
     private inner class InnerList() : ObservableListIndicies<E>(source) {
     }
@@ -50,8 +51,8 @@ class ObservableListMultiGroupingBy<E, G, L>(
             for (group in groups) {
                 val current = getOrMakeGroup(group)
                 current.indexList.add(index)
-                current.onAdd.runAll(item, current.indexList.size - 1)
-                current.onUpdate.invokeAll(current)
+                current.onAdd.invokeAll(item, current.indexList.size - 1)
+                current.onUpdate.update()
             }
         }
     }
@@ -93,24 +94,24 @@ class ObservableListMultiGroupingBy<E, G, L>(
     inner private class QueuedOnRemoveCall(val groupList: InnerList, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnRemoveCall> {
         override fun compareTo(other: QueuedOnRemoveCall): Int = index.compareTo(other.index)
         override fun invoke() {
-            groupList.onRemove.runAll(element, index)
-            groupList.onUpdate.invokeAll(groupList)
+            groupList.onRemove.invokeAll(element, index)
+            groupList.onUpdate.update()
         }
     }
 
     inner private class QueuedOnAddCall(val groupList: InnerList, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnAddCall> {
         override fun compareTo(other: QueuedOnAddCall): Int = index.compareTo(other.index)
         override fun invoke() {
-            groupList.onAdd.runAll(element, index)
-            groupList.onUpdate.invokeAll(groupList)
+            groupList.onAdd.invokeAll(element, index)
+            groupList.onUpdate.update()
         }
     }
 
     inner private class QueuedOnChangeCall(val groupList: InnerList, val oldElement: E, val element: E, val index: Int) : () -> Unit, Comparable<QueuedOnChangeCall> {
         override fun compareTo(other: QueuedOnChangeCall): Int = index.compareTo(other.index)
         override fun invoke() {
-            groupList.onChange.runAll(oldElement, element, index)
-            groupList.onUpdate.invokeAll(groupList)
+            groupList.onChange.invokeAll(oldElement, element, index)
+            groupList.onUpdate.update()
         }
     }
 
@@ -121,8 +122,8 @@ class ObservableListMultiGroupingBy<E, G, L>(
                 for (group in groups) {
                     val list = getOrMakeGroup(group)
                     list.indexList.add(index)
-                    list.onAdd.runAll(item, list.indexList.size - 1)
-                    list.onUpdate.invokeAll(list)
+                    list.onAdd.invokeAll(item, list.indexList.size - 1)
+                    list.onUpdate.update()
                 }
             },
             onRemoveListener = { item, index ->
@@ -136,8 +137,8 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(Int.MIN_VALUE)
                         groupList.indexList.removeAt(indexIndex)
-                        groupList.onRemove.runAll(item, indexIndex)
-                        groupList.onUpdate.invokeAll(groupList)
+                        groupList.onRemove.invokeAll(item, indexIndex)
+                        groupList.onUpdate.update()
                         if (groupList.isEmpty()) {
                             removeGroup(group)
                         }
@@ -154,16 +155,16 @@ class ObservableListMultiGroupingBy<E, G, L>(
                     val groupList = groupLists[group]
                     if (groupList != null) {
                         val indexIndex = groupList.indexList.indexOf(index)
-                        groupList.onChange.runAll(oldItem, item, indexIndex)
-                        groupList.onUpdate.invokeAll(groupList)
+                        groupList.onChange.invokeAll(oldItem, item, indexIndex)
+                        groupList.onUpdate.update()
                     } else throw IllegalArgumentException()
                 }
                 for (group in removingGroups) {
                     val oldGroupList = groupLists[group] ?: throw IllegalArgumentException()
                     val oldIndexIndex = oldGroupList.indexList.indexOf(index)
                     oldGroupList.indexList.removeAt(oldIndexIndex)
-                    oldGroupList.onRemove.runAll(oldItem, oldIndexIndex)
-                    oldGroupList.onUpdate.invokeAll(oldGroupList)
+                    oldGroupList.onRemove.invokeAll(oldItem, oldIndexIndex)
+                    oldGroupList.onUpdate.update()
                     if (oldGroupList.isEmpty()) {
                         removeGroup(group)
                     }
@@ -171,8 +172,8 @@ class ObservableListMultiGroupingBy<E, G, L>(
                 for (group in addingGroups) {
                     val newGroupList = getOrMakeGroup(group)
                     newGroupList.indexList.add(index)
-                    newGroupList.onAdd.runAll(item, newGroupList.indexList.size - 1)
-                    newGroupList.onUpdate.invokeAll(newGroupList)
+                    newGroupList.onAdd.invokeAll(item, newGroupList.indexList.size - 1)
+                    newGroupList.onUpdate.update()
                 }
             },
             onMoveListener = { item, oldIndex, index ->
@@ -219,7 +220,7 @@ class ObservableListMultiGroupingBy<E, G, L>(
         source.addListenerSet(listener)
     }
 
-    override fun dispose() {
+    override fun close() {
         source.removeListenerSet(listener)
         innerList.clear()
     }
@@ -242,12 +243,12 @@ fun <E, G, L> ObservableList<E>.multiGroupingBy(
         }
 
         override fun onStop() {
-            list.dispose()
+            list.close()
         }
     })
     return list
 }
 
-inline fun <E, G> ObservableList<E>.multiGroupingBy(noinline grouper: (E) -> Collection<G>) = multiGroupingBy(grouper, { it })
+fun <E, G> ObservableList<E>.multiGroupingBy(grouper: (E) -> Collection<G>) = multiGroupingBy(grouper, { it })
 
-inline fun <E, G> ObservableList<E>.multiGroupingBy(lifecycle: LifecycleConnectable, noinline grouper: (E) -> Collection<G>) = multiGroupingBy(lifecycle, grouper, { it })
+fun <E, G> ObservableList<E>.multiGroupingBy(lifecycle: LifecycleConnectable, grouper: (E) -> Collection<G>) = multiGroupingBy(lifecycle, grouper, { it })

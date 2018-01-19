@@ -11,6 +11,6 @@ open class LateInitObservableProperty<T : Any>() : BaseObservableProperty<T>() {
         get() = internalValue ?: throw throw IllegalAccessException("Value not set.")
         set(value) {
             internalValue = value
-            update(value)
+            update()
         }
 }

@@ -2,9 +2,11 @@ package com.lightningkite.kotlin.observable.list
 
 import com.lightningkite.kotlin.collection.mapping
 import com.lightningkite.kotlin.collection.mappingWriteOnly
-import com.lightningkite.kotlin.observable.property.mapReadOnly
+import com.lightningkite.kotlin.observable.property.transform
 
 /**
+ * Gives you a view of an observable list where the entries have been mapped.
+ *
  * Created by jivie on 5/6/16.
  */
 class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) -> E, val reverseMapper: (E) -> S) : ObservableList<E> {
@@ -52,15 +54,9 @@ class ObservableListMapped<S, E>(val source: ObservableList<S>, val mapper: (S) 
         }
     }
 
-    override val onUpdate = source.onUpdate.mapReadOnly<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
+    override val onUpdate = source.onUpdate.transform<ObservableList<S>, ObservableList<E>>({ it -> this@ObservableListMapped })
     override val onReplace: MutableCollection<(ObservableList<E>) -> Unit> = source.onReplace.mappingWriteOnly({ input -> { input(this) } })
 }
-
-@Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper, reverseMapper)", "com.lightningkite.kotlin.observable.list.mapping"))
-fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
-
-@Deprecated("This has been renamed to 'mapping'.", ReplaceWith("mapping(mapper)", "com.lightningkite.kotlin.observable.list.mapping"))
-fun <S, E> ObservableList<S>.mapObservableList(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, { throw IllegalArgumentException() })
 
 fun <S, E> ObservableList<S>.mapping(mapper: (S) -> E, reverseMapper: (E) -> S): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, reverseMapper)
 fun <S, E> ObservableList<S>.mapping(mapper: (S) -> E): ObservableListMapped<S, E> = ObservableListMapped(this, mapper, { throw IllegalArgumentException() })

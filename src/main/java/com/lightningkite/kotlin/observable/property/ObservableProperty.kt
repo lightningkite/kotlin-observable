@@ -22,7 +22,7 @@ interface ObservableProperty<T> {
     }
 
     /**
-     * Adds a listener
+     * Adds a listener to be notified when the value changes.
      */
     fun add(element: (T) -> Unit): Boolean
 

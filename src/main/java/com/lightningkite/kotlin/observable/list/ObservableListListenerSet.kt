@@ -1,9 +1,9 @@
 package com.lightningkite.kotlin.observable.list
 
 /**
+ * A set of listeners for an observable list.
  * Created by jivie on 5/5/16.
  */
-
 class ObservableListListenerSet<T>(
         val onAddListener: (item: T, position: Int) -> Unit,
         val onRemoveListener: (item: T, position: Int) -> Unit,
