@@ -48,6 +48,17 @@ class StackObservableProperty<T> : MutableObservableProperty<T> {
     }
 
     /**
+     * Pops a state off the stack and notifies the listeners.
+     * If there are no states that can be popped off, the function returns false.
+     */
+    fun popOrFalse(): Boolean {
+        return if (stack.size > 1) {
+            pop()
+            true
+        } else false
+    }
+
+    /**
      * Pops all of the states off the stack except for the bottom one and notifies the listeners.
      */
     fun root() {
