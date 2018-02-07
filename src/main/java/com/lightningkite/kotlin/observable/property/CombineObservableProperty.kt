@@ -1,10 +1,9 @@
 package com.lightningkite.kotlin.observable.property
 
 import java.util.*
-import java.util.function.Consumer
-import java.util.function.Predicate
 
 /**
+ *
  * Created by joseph on 12/2/16.
  */
 class CombineObservableProperty2<A, B, T>(
@@ -30,23 +29,12 @@ class CombineObservableProperty2<A, B, T>(
     override fun enable() {
         observableA.add(callbackA)
         observableB.add(callbackB)
+        update()
     }
 
     override fun disable() {
         observableA.remove(callbackA)
         observableB.remove(callbackB)
-    }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
     }
 }
 
@@ -85,18 +73,6 @@ class CombineObservableProperty3<A, B, C, T>(
         observableB.remove(callbackB)
         observableC.remove(callbackC)
     }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
-    }
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -128,17 +104,5 @@ class CombineObservablePropertyBlind<T>(
     override fun disable() {
         callbacks.forEach { (key, value) -> key.remove(value) }
         callbacks.clear()
-    }
-
-    override fun spliterator(): Spliterator<(T) -> Unit> {
-        return super<EnablingMutableCollection>.spliterator()
-    }
-
-    override fun removeIf(filter: Predicate<in (T) -> Unit>): Boolean {
-        return super<EnablingMutableCollection>.removeIf(filter)
-    }
-
-    override fun forEach(action: Consumer<in (T) -> Unit>) {
-        super<EnablingMutableCollection>.forEach(action)
     }
 }
